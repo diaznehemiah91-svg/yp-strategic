@@ -19,9 +19,11 @@ interface Signal {
   title: string;
   summary: string;
   source: string;
+  url: string;
   category: string;
   severity: string;
   tickers: string[];
+  publishedAt: string;
   timestamp: string;
 }
 
