@@ -9,73 +9,79 @@ const ALPHA_VANTAGE_KEY = process.env.ALPHA_VANTAGE_API_KEY;
 const NEWSAPI_KEY = process.env.NEWSAPI_KEY;
 const CMC_KEY = process.env.COINMARKETCAP_API_KEY;
 const FRED_KEY = process.env.FRED_API_KEY;
+const FINNHUB_KEY = process.env.FINNHUB_KEY;
 
 // ── STOCKS ──
 export async function fetchStocks(tickers?: string[]): Promise<mock.StockQuote[]> {
+  if (!FINNHUB_KEY) {
+    console.warn('[fetchStocks] FINNHUB_KEY not configured, using mock data');
+    return mock.getMockStocks();
+  }
+
   try {
     const allTickers = tickers || ['LMT', 'RTX', 'NOC', 'GD', 'BA', 'PLTR', 'CRWD', 'NVDA', 'AXON', 'IONQ', 'OKLO', 'RKLB'];
     const quotes: mock.StockQuote[] = [];
 
     for (const ticker of allTickers) {
       try {
-        // Call the internal /api/stock-price endpoint (60s cache, real-time Finnhub data)
-        const res = await fetch(`/api/stock-price?symbol=${ticker}`, {
-          next: { revalidate: 60 },
-        });
+        // Call Finnhub directly — relative URLs don't work in server components
+        const res = await fetch(
+          `https://finnhub.io/api/v1/quote?symbol=${ticker}&token=${FINNHUB_KEY}`,
+          { next: { revalidate: 60 } }
+        );
 
         if (!res.ok) {
-          console.warn(`Failed to fetch price for ${ticker}: ${res.status}`);
+          console.warn(`[fetchStocks] Finnhub returned ${res.status} for ${ticker}`);
           continue;
         }
 
         const data = await res.json();
 
-        if (data.error) {
-          console.warn(`API error for ${ticker}: ${data.error}`);
+        if (data.c === undefined || data.c === null || data.c === 0) {
+          console.warn(`[fetchStocks] No price data for ${ticker}`, data);
           continue;
         }
 
-        // Map Finnhub response to StockQuote format
         quotes.push({
           ticker,
           name: ticker,
-          price: data.price || 0,
-          change: data.change || 0,
-          changePct: data.changePercent || 0,
-          volume: 0, // Finnhub quote endpoint doesn't return volume; would need a different endpoint
+          price: data.c,
+          change: data.d ?? 0,
+          changePct: data.dp ?? 0,
+          volume: 0,
           marketCap: 0,
           sector: 'Defence',
         });
       } catch (error) {
-        console.warn(`Error fetching ${ticker}:`, error);
-        // Continue to next ticker instead of failing completely
+        console.warn(`[fetchStocks] Error fetching ${ticker}:`, error);
         continue;
       }
     }
 
     return quotes.length > 0 ? quotes : mock.getMockStocks();
   } catch (error) {
-    console.error('Error in fetchStocks:', error);
+    console.error('[fetchStocks] Fatal error:', error);
     return mock.getMockStocks();
   }
 }
 
 // ── NEWS / SIGNALS ──
 export async function fetchSignals(category?: string): Promise<mock.SignalItem[]> {
-  if (!NEWSAPI_KEY || NEWSAPI_KEY === 'your_key_here') {
+  if (!FINNHUB_KEY) {
     const signals = mock.getMockSignals();
     return category ? signals.filter(s => s.category === category) : signals;
   }
   try {
-    // Fetch news for major defence contractors and related sectors
+    // Fetch news for major defence contractors and related sectors via Finnhub
     const majors = ['LMT', 'RTX', 'NOC', 'GD', 'BA', 'PLTR', 'CRWD', 'NVDA'];
     const allNews: mock.SignalItem[] = [];
 
     for (const ticker of majors) {
       try {
-        const res = await fetch(`/api/company-news?symbol=${ticker}`, {
-          next: { revalidate: 300 }, // 5 min cache as specified
-        });
+        const res = await fetch(
+          `https://finnhub.io/api/v1/company-news?symbol=${ticker}&from=${new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0]}&to=${new Date().toISOString().split('T')[0]}&token=${FINNHUB_KEY}`,
+          { next: { revalidate: 300 } }
+        );
 
         if (!res.ok) {
           console.warn(`Failed to fetch news for ${ticker}: ${res.status}`);
@@ -95,9 +101,10 @@ export async function fetchSignals(category?: string): Promise<mock.SignalItem[]
               category: categorizeArticle((article.headline || '') + ' ' + (article.summary || '')),
               severity: 'INFO',
               tickers: [ticker],
-              publishedAt: article.datetime ? new Date(article.datetime).toISOString() : new Date().toISOString(),
+              // Finnhub datetime is Unix seconds — multiply by 1000 for JS Date
+              publishedAt: article.datetime ? new Date(article.datetime * 1000).toISOString() : new Date().toISOString(),
               timestamp: article.datetime
-                ? new Date(article.datetime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })
+                ? new Date(article.datetime * 1000).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })
                 : new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
             });
           });

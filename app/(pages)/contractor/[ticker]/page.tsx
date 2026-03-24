@@ -20,6 +20,13 @@ export default async function ContractorPage({ params }: { params: { ticker: str
   // Try to find the stock in all stocks
   const stock = allStocks.find(s => s.ticker === ticker);
 
+  // Override mock prices with live Finnhub prices
+  if (contractor && stock && stock.price > 0) {
+    contractor.price = stock.price;
+    contractor.change = stock.change;
+    contractor.changePct = stock.changePct;
+  }
+
   // Filter signals relevant to this ticker
   const relatedSignals = allSignals.filter(s => s.tickers.includes(ticker));
   const relatedGeo = geoRisk.filter(g => g.impactTickers.includes(ticker));
