@@ -1,39 +1,58 @@
-import { fetchContractor, fetchSignals, fetchFedUpdates, fetchGeoRisk } from '@/app/lib/fetchers';
+import { fetchContractor, fetchSignals, fetchFedUpdates, fetchGeoRisk, fetchStocks } from '@/app/lib/fetchers';
 import ThreeBackground from '@/app/components/ThreeBackground';
 import NavBar from '@/app/components/NavBar';
 import AdSlot from '@/app/components/AdSlot';
 import Link from 'next/link';
+import StockDetailClient from '@/app/components/StockDetailClient';
 
 export const revalidate = 60;
 
 export default async function ContractorPage({ params }: { params: { ticker: string } }) {
   const ticker = params.ticker.toUpperCase();
-  const [contractor, allSignals, fedUpdates, geoRisk] = await Promise.all([
+  const [contractor, allSignals, fedUpdates, geoRisk, allStocks] = await Promise.all([
     fetchContractor(ticker),
     fetchSignals(),
     fetchFedUpdates(),
     fetchGeoRisk(),
+    fetchStocks(),
   ]);
 
-  if (!contractor) {
+  // Try to find the stock in all stocks
+  const stock = allStocks.find(s => s.ticker === ticker);
+
+  // Filter signals relevant to this ticker
+  const relatedSignals = allSignals.filter(s => s.tickers.includes(ticker));
+  const relatedGeo = geoRisk.filter(g => g.impactTickers.includes(ticker));
+
+  // If no contractor profile but stock exists, show basic stock intelligence
+  if (!contractor && stock) {
+    return (
+      <>
+        <ThreeBackground />
+        <div className="relative z-10 max-w-[1260px] mx-auto px-5 pt-6 pb-20">
+          <NavBar />
+          <StockDetailClient stock={stock} signals={relatedSignals} geoRisk={relatedGeo} />
+        </div>
+      </>
+    );
+  }
+
+  // If neither contractor nor stock exists, show error
+  if (!contractor && !stock) {
     return (
       <>
         <ThreeBackground />
         <div className="relative z-10 max-w-[1260px] mx-auto px-5 pt-6 pb-20">
           <NavBar />
           <div className="glass p-12 text-center">
-            <h1 className="text-2xl font-bold text-[var(--text-bright)] mb-4">Contractor Not Found</h1>
-            <p className="text-[var(--text-dim)] mb-6">No intelligence brief available for ticker: {ticker}</p>
+            <h1 className="text-2xl font-bold text-[var(--text-bright)] mb-4">Stock Not Found</h1>
+            <p className="text-[var(--text-dim)] mb-6">No data available for ticker: {ticker}</p>
             <Link href="/" className="text-[var(--accent)] font-mono text-sm no-underline hover:underline">← Return to Dashboard</Link>
           </div>
         </div>
       </>
     );
   }
-
-  // Filter signals relevant to this contractor
-  const relatedSignals = allSignals.filter(s => s.tickers.includes(ticker));
-  const relatedGeo = geoRisk.filter(g => g.impactTickers.includes(ticker));
 
   return (
     <>
