@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 export async function GET() {
   return NextResponse.json({
     status: 'operational',
-    service: 'Y.P STRATINTEL',
+    service: 'Y.P STRATEGIC',
     version: '2.0.0',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),

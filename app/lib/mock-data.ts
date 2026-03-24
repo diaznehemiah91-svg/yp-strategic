@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════
-// Y.P STRATINTEL — Mock Data Layer
+// Y.P STRATEGIC — Mock Data Layer
 // Returns realistic placeholder data when API keys aren't configured
 // Every function here mirrors the shape of the real API responses
 // ═══════════════════════════════════════════════════════════

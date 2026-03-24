@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════
-// Y.P STRATINTEL — Data Fetcher Service
+// Y.P STRATEGIC — Data Fetcher Service
 // Checks for API keys → uses live data OR falls back to mock
 // ═══════════════════════════════════════════════════════════
 
