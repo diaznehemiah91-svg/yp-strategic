@@ -12,31 +12,50 @@ const FRED_KEY = process.env.FRED_API_KEY;
 
 // ── STOCKS ──
 export async function fetchStocks(tickers?: string[]): Promise<mock.StockQuote[]> {
-  if (!ALPHA_VANTAGE_KEY || ALPHA_VANTAGE_KEY === 'your_key_here') {
-    return mock.getMockStocks();
-  }
   try {
     const allTickers = tickers || ['LMT', 'RTX', 'NOC', 'GD', 'BA', 'PLTR', 'CRWD', 'NVDA', 'AXON', 'IONQ', 'OKLO', 'RKLB'];
     const quotes: mock.StockQuote[] = [];
-    for (const ticker of allTickers.slice(0, 5)) { // Rate limit: 5/min on free tier
-      const res = await fetch(`https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${ticker}&apikey=${ALPHA_VANTAGE_KEY}`);
-      const data = await res.json();
-      const gq = data['Global Quote'];
-      if (gq) {
+
+    for (const ticker of allTickers) {
+      try {
+        // Call the internal /api/stock-price endpoint (60s cache, real-time Finnhub data)
+        const res = await fetch(`/api/stock-price?symbol=${ticker}`, {
+          next: { revalidate: 60 },
+        });
+
+        if (!res.ok) {
+          console.warn(`Failed to fetch price for ${ticker}: ${res.status}`);
+          continue;
+        }
+
+        const data = await res.json();
+
+        if (data.error) {
+          console.warn(`API error for ${ticker}: ${data.error}`);
+          continue;
+        }
+
+        // Map Finnhub response to StockQuote format
         quotes.push({
           ticker,
           name: ticker,
-          price: parseFloat(gq['05. price']),
-          change: parseFloat(gq['09. change']),
-          changePct: parseFloat(gq['10. change percent']?.replace('%', '')),
-          volume: parseInt(gq['06. volume']),
+          price: data.price || 0,
+          change: data.change || 0,
+          changePct: data.changePercent || 0,
+          volume: 0, // Finnhub quote endpoint doesn't return volume; would need a different endpoint
           marketCap: 0,
           sector: 'Defence',
         });
+      } catch (error) {
+        console.warn(`Error fetching ${ticker}:`, error);
+        // Continue to next ticker instead of failing completely
+        continue;
       }
     }
+
     return quotes.length > 0 ? quotes : mock.getMockStocks();
-  } catch {
+  } catch (error) {
+    console.error('Error in fetchStocks:', error);
     return mock.getMockStocks();
   }
 }
@@ -48,32 +67,56 @@ export async function fetchSignals(category?: string): Promise<mock.SignalItem[]
     return category ? signals.filter(s => s.category === category) : signals;
   }
   try {
-    const queries = [
-      'defence contractor military',
-      'Pentagon DoD contract',
-      'Federal Reserve interest rate',
-      'geopolitical conflict sanctions',
-      'Bitcoin crypto futures',
-    ];
-    const query = queries.join(' OR ');
-    const res = await fetch(`https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&sortBy=publishedAt&pageSize=20&apiKey=${NEWSAPI_KEY}`);
-    const data = await res.json();
-    if (data.articles) {
-      return data.articles.map((a: any, i: number) => ({
-        id: `live-${i}`,
-        title: a.title,
-        summary: a.description || '',
-        source: a.source?.name || 'Unknown',
-        url: a.url,
-        category: categorizeArticle(a.title + ' ' + (a.description || '')),
-        severity: 'INFO',
-        tickers: extractTickers(a.title + ' ' + (a.description || '')),
-        publishedAt: a.publishedAt,
-        timestamp: new Date(a.publishedAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
-      }));
+    // Fetch news for major defence contractors and related sectors
+    const majors = ['LMT', 'RTX', 'NOC', 'GD', 'BA', 'PLTR', 'CRWD', 'NVDA'];
+    const allNews: mock.SignalItem[] = [];
+
+    for (const ticker of majors) {
+      try {
+        const res = await fetch(`/api/company-news?symbol=${ticker}`, {
+          next: { revalidate: 300 }, // 5 min cache as specified
+        });
+
+        if (!res.ok) {
+          console.warn(`Failed to fetch news for ${ticker}: ${res.status}`);
+          continue;
+        }
+
+        const articles = await res.json();
+
+        if (Array.isArray(articles)) {
+          articles.forEach((article: any, idx: number) => {
+            allNews.push({
+              id: `${ticker}-${idx}`,
+              title: article.headline || '',
+              summary: article.summary || '',
+              source: article.source || 'Unknown',
+              url: article.url || '#',
+              category: categorizeArticle((article.headline || '') + ' ' + (article.summary || '')),
+              severity: 'INFO',
+              tickers: [ticker],
+              publishedAt: article.datetime ? new Date(article.datetime).toISOString() : new Date().toISOString(),
+              timestamp: article.datetime
+                ? new Date(article.datetime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })
+                : new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
+            });
+          });
+        }
+      } catch (error) {
+        console.warn(`Error fetching news for ${ticker}:`, error);
+        // Continue to next ticker
+        continue;
+      }
     }
-    return mock.getMockSignals();
-  } catch {
+
+    // Sort by publishedAt (most recent first) and limit to 20
+    const sorted = allNews.sort((a, b) =>
+      new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
+    ).slice(0, 20);
+
+    return sorted.length > 0 ? sorted : mock.getMockSignals();
+  } catch (error) {
+    console.error('Error in fetchSignals:', error);
     return mock.getMockSignals();
   }
 }

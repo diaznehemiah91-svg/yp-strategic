@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
 interface Stock {
@@ -47,9 +47,66 @@ export default function StockDetailClient({
 }) {
   const [phoneInput, setPhoneInput] = useState('');
   const [alertSet, setAlertSet] = useState(false);
+  const [livePrice, setLivePrice] = useState<number | null>(null);
+  const [liveChange, setLiveChange] = useState<number | null>(null);
+  const [liveChangePercent, setLiveChangePercent] = useState<number | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const changePct = stock.changePct ?? stock.change;
   const isPositive = changePct > 0;
+
+  // Fetch latest price from API
+  const fetchLivePrice = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(`/api/stock-price?symbol=${stock.ticker}`);
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+      const data = await response.json();
+      setLivePrice(data.price);
+      setLiveChange(data.change);
+      setLiveChangePercent(data.changePercent);
+      setLastUpdated(new Date().toISOString());
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch price');
+      // Keep showing last known price if available
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Initial fetch and set up polling interval
+  useEffect(() => {
+    fetchLivePrice();
+    const intervalId = setInterval(fetchLivePrice, 60000); // 60 seconds
+    return () => clearInterval(intervalId);
+  }, [stock.ticker]);
+
+  // Format timestamp to ET timezone
+  const formatTimeET = (isoString: string | null) => {
+    if (!isoString) return '';
+    try {
+      const date = new Date(isoString);
+      return date.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+        timeZone: 'America/New_York',
+      }) + ' ET';
+    } catch {
+      return '';
+    }
+  };
+
+  // Use live price if available, fallback to static price
+  const displayPrice = livePrice ?? stock.price;
+  const displayChange = liveChange ?? stock.change;
+  const displayChangePercent = liveChangePercent ?? changePct;
+  const displayIsPositive = displayChangePercent >= 0;
 
   const handleSMSAlert = () => {
     if (phoneInput.trim()) {
@@ -87,10 +144,18 @@ export default function StockDetailClient({
             <p className="text-sm text-[var(--text-dim)]">Real-time market intelligence for {stock.name}</p>
           </div>
           <div className="text-right">
-            <div className="font-mono text-3xl font-bold text-[var(--text-bright)]">${stock.price.toFixed(2)}</div>
-            <div className={`font-mono text-sm ${isPositive ? 'text-[var(--accent)]' : 'text-[var(--accent3)]'}`}>
-              {isPositive ? '▲' : '▼'} ${Math.abs(stock.change).toFixed(2)} ({isPositive ? '+' : ''}{changePct.toFixed(2)}%)
+            <div className="font-mono text-3xl font-bold text-[var(--text-bright)]">${displayPrice.toFixed(2)}</div>
+            <div className={`font-mono text-sm ${displayIsPositive ? 'text-[var(--accent)]' : 'text-[var(--accent3)]'}`}>
+              {displayIsPositive ? '▲' : '▼'} ${Math.abs(displayChange).toFixed(2)} ({displayIsPositive ? '+' : ''}{displayChangePercent.toFixed(2)}%)
             </div>
+            {lastUpdated && (
+              <div className="text-[10px] text-[var(--text-dim)] mt-2">
+                Last updated: {formatTimeET(lastUpdated)}
+              </div>
+            )}
+            {livePrice !== null && (
+              <p className="text-[9px] text-[var(--text-dim)] mt-1">Prices delayed ~15 min (free tier)</p>
+            )}
           </div>
         </div>
       </div>
@@ -123,8 +188,8 @@ export default function StockDetailClient({
               )}
               <div>
                 <p className="text-[10px] text-[var(--text-dim)] mb-1">Change</p>
-                <p className={`font-mono text-sm ${isPositive ? 'text-[var(--accent)]' : 'text-[var(--accent3)]'}`}>
-                  {isPositive ? '+' : ''}{changePct.toFixed(2)}%
+                <p className={`font-mono text-sm ${displayIsPositive ? 'text-[var(--accent)]' : 'text-[var(--accent3)]'}`}>
+                  {displayIsPositive ? '+' : ''}{displayChangePercent.toFixed(2)}%
                 </p>
               </div>
             </div>
@@ -241,12 +306,12 @@ export default function StockDetailClient({
               <div className="flex justify-between py-1 border-b border-[rgba(0,255,80,0.1)]">
                 <span className="text-[var(--text-dim)]">Status</span>
                 <span className="text-[var(--accent)] font-semibold">
-                  {isPositive ? '📈 Bullish' : '📉 Bearish'}
+                  {displayIsPositive ? '📈 Bullish' : '📉 Bearish'}
                 </span>
               </div>
               <div className="flex justify-between py-1 border-b border-[rgba(0,255,80,0.1)]">
                 <span className="text-[var(--text-dim)]">Volatility</span>
-                <span className="text-[var(--text-bright)]">{Math.abs(changePct) > 5 ? '🔥 High' : 'Moderate'}</span>
+                <span className="text-[var(--text-bright)]">{Math.abs(displayChangePercent) > 5 ? '🔥 High' : 'Moderate'}</span>
               </div>
               <div className="flex justify-between py-1">
                 <span className="text-[var(--text-dim)]">Signal Mentions</span>
