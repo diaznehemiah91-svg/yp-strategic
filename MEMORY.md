@@ -25,8 +25,16 @@ Replace 15-20 minute delayed stock data (Alpha Vantage) with real-time pricing v
 - Disclaimer: "Prices delayed ~15 min (free tier)"
 - Graceful fallback if API fails
 
-## 🔄 In Progress
-**Awaiting:** User commits, pushes, deploys, and tests on live site
+## 🔄 Current Status: API Debugging
+
+**Deployment Status:** ✅ Build successful (b092fef)
+- Latest deployment: 4W1vmEmW (7m ago) - Ready
+- TypeScript error fixed with null guard
+
+**API Testing Results:**
+- ✅ `/api/stock-price?symbol=PLTR` returns HTTP 200 (no longer 404)
+- ❌ Response is `{}` (empty) - need to debug why Finnhub data isn't being captured
+- Possible causes: API key not read, Finnhub rate limit, response parsing error
 
 ## 🔐 Environment Setup (USER ACTION)
 
