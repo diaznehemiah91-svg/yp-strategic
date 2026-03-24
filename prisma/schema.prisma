@@ -1,0 +1,141 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ── CACHED STOCK DATA ──
+model StockQuote {
+  id        String   @id @default(cuid())
+  ticker    String
+  price     Float
+  change    Float
+  changePct Float
+  volume    Int
+  marketCap Float?
+  sector    String?
+  fetchedAt DateTime @default(now())
+
+  @@index([ticker, fetchedAt])
+}
+
+// ── NEWS / SIGNAL FEED ──
+model SignalItem {
+  id        String   @id @default(cuid())
+  title     String
+  summary   String
+  source    String
+  url       String?
+  category  String   // DEFENCE, AI, CYBER, NUCLEAR, QUANTUM, MACRO, FED, GEOPOLITICAL, CRYPTO, FUTURES
+  severity  String   @default("INFO") // INFO, ALERT, CRITICAL
+  tickers   String[] // related ticker symbols
+  publishedAt DateTime
+  fetchedAt   DateTime @default(now())
+
+  @@index([category, publishedAt])
+}
+
+// ── DEFENCE CONTRACTORS ──
+model Contractor {
+  id          String @id @default(cuid())
+  ticker      String @unique
+  name        String
+  sector      String
+  description String
+  keyPrograms String[]
+  recentContracts Json?
+  financials    Json?
+  riskFactors   String[]
+  updatedAt   DateTime @updatedAt
+}
+
+// ── GEOPOLITICAL RISK EVENTS ──
+model GeoRiskEvent {
+  id        String   @id @default(cuid())
+  title     String
+  region    String
+  severity  Int      // 1-10
+  category  String   // CONFLICT, SANCTIONS, TRADE, CYBER, NUCLEAR
+  summary   String
+  impactTickers String[]
+  timestamp DateTime
+  fetchedAt DateTime @default(now())
+
+  @@index([severity, timestamp])
+}
+
+// ── FED / MACRO ──
+model FedUpdate {
+  id        String   @id @default(cuid())
+  title     String
+  type      String   // RATE_DECISION, SPEECH, MINUTES, DOT_PLOT, CPI, PPI, JOBS
+  summary   String
+  sentiment String   // HAWKISH, DOVISH, NEUTRAL
+  date      DateTime
+  fetchedAt DateTime @default(now())
+
+  @@index([type, date])
+}
+
+// ── CRYPTO PRICES ──
+model CryptoQuote {
+  id        String   @id @default(cuid())
+  symbol    String   // BTC, ETH, SOL, etc.
+  price     Float
+  change24h Float
+  volume24h Float
+  marketCap Float
+  fetchedAt DateTime @default(now())
+
+  @@index([symbol, fetchedAt])
+}
+
+// ── FUTURES ──
+model FuturesQuote {
+  id        String   @id @default(cuid())
+  symbol    String   // /NQ, /ES, /YM, /CL, /GC
+  name      String
+  price     Float
+  change    Float
+  changePct Float
+  fetchedAt DateTime @default(now())
+
+  @@index([symbol, fetchedAt])
+}
+
+// ── SUBSCRIBERS ──
+model Subscriber {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  clerkId   String?  @unique
+  tier      String   @default("FREE") // FREE, PRO, INSTITUTIONAL
+  stripeId  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ── AD IMPRESSIONS (for revenue tracking) ──
+model AdImpression {
+  id        String   @id @default(cuid())
+  slot      String   // sidebar, banner, feed-inline, etc.
+  page      String
+  clicked   Boolean  @default(false)
+  revenue   Float    @default(0)
+  timestamp DateTime @default(now())
+
+  @@index([slot, timestamp])
+}
+
+// ── ANALYTICS (page views for bank reports) ──
+model PageView {
+  id        String   @id @default(cuid())
+  path      String
+  referrer  String?
+  userAgent String?
+  timestamp DateTime @default(now())
+
+  @@index([path, timestamp])
+}
