@@ -54,6 +54,9 @@ export default async function ContractorPage({ params }: { params: { ticker: str
     );
   }
 
+  // TypeScript knows contractor is not null at this point due to the early returns above
+  if (!contractor) return null;
+
   return (
     <>
       <ThreeBackground />
