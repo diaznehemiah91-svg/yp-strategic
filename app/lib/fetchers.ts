@@ -9,53 +9,78 @@ const ALPHA_VANTAGE_KEY = process.env.ALPHA_VANTAGE_API_KEY;
 const NEWSAPI_KEY = process.env.NEWSAPI_KEY;
 const CMC_KEY = process.env.COINMARKETCAP_API_KEY;
 const FRED_KEY = process.env.FRED_API_KEY;
+const FINNHUB_KEY = process.env.FINNHUB_KEY;
+
+// Sector map for display
+const SECTOR_MAP: Record<string, string> = {
+  LMT: 'Aerospace & Defence', RTX: 'Aerospace & Defence', NOC: 'Aerospace & Defence',
+  GD: 'Aerospace & Defence', BA: 'Aerospace & Defence', PLTR: 'Defence Tech / AI',
+  CRWD: 'Cybersecurity', NVDA: 'Semiconductors / AI', AXON: 'Defence Tech',
+  IONQ: 'Quantum Computing', OKLO: 'Nuclear Energy', RKLB: 'Space & Launch',
+  LDOS: 'IT Services / Defence', HII: 'Shipbuilding',
+};
 
 // ── STOCKS ──
 export async function fetchStocks(tickers?: string[]): Promise<mock.StockQuote[]> {
+  const allTickers = tickers || ['LMT', 'RTX', 'NOC', 'GD', 'BA', 'PLTR', 'CRWD', 'NVDA', 'AXON', 'IONQ', 'OKLO', 'RKLB'];
+
+  if (!FINNHUB_KEY) {
+    console.warn('[fetchStocks] FINNHUB_KEY not configured — using mock data');
+    return mock.getMockStocks().filter(s => allTickers.includes(s.ticker));
+  }
+
   try {
-    const allTickers = tickers || ['LMT', 'RTX', 'NOC', 'GD', 'BA', 'PLTR', 'CRWD', 'NVDA', 'AXON', 'IONQ', 'OKLO', 'RKLB'];
     const quotes: mock.StockQuote[] = [];
 
     for (const ticker of allTickers) {
       try {
-        // Call the internal /api/stock-price endpoint (60s cache, real-time Finnhub data)
-        const res = await fetch(`/api/stock-price?symbol=${ticker}`, {
-          next: { revalidate: 60 },
-        });
+        // Call Finnhub directly with absolute URL (relative URLs don't work server-side)
+        const res = await fetch(
+          `https://finnhub.io/api/v1/quote?symbol=${ticker}&token=${FINNHUB_KEY}`,
+          { next: { revalidate: 60 } }
+        );
 
         if (!res.ok) {
-          console.warn(`Failed to fetch price for ${ticker}: ${res.status}`);
+          console.warn(`[fetchStocks] Finnhub ${res.status} for ${ticker}`);
           continue;
         }
 
         const data = await res.json();
 
-        if (data.error) {
-          console.warn(`API error for ${ticker}: ${data.error}`);
+        // Finnhub returns c=0 for unknown symbols or outside trading hours with no data
+        if (!data.c) {
+          console.warn(`[fetchStocks] No price (c=0) from Finnhub for ${ticker}`);
           continue;
         }
 
-        // Map Finnhub response to StockQuote format
+        // Map from mock data for name/sector enrichment
+        const mockMatch = mock.getMockStocks().find(s => s.ticker === ticker);
+
         quotes.push({
           ticker,
-          name: ticker,
-          price: data.price || 0,
-          change: data.change || 0,
-          changePct: data.changePercent || 0,
-          volume: 0, // Finnhub quote endpoint doesn't return volume; would need a different endpoint
-          marketCap: 0,
-          sector: 'Defence',
+          name: mockMatch?.name ?? ticker,
+          price: data.c,
+          change: data.d ?? 0,
+          changePct: data.dp ?? 0,
+          volume: mockMatch?.volume ?? 0,
+          marketCap: mockMatch?.marketCap ?? 0,
+          sector: SECTOR_MAP[ticker] ?? 'Defence',
         });
       } catch (error) {
-        console.warn(`Error fetching ${ticker}:`, error);
-        // Continue to next ticker instead of failing completely
+        console.warn(`[fetchStocks] Error fetching ${ticker}:`, error);
         continue;
       }
     }
 
-    return quotes.length > 0 ? quotes : mock.getMockStocks();
+    if (quotes.length > 0) {
+      console.log(`[fetchStocks] Live prices fetched for ${quotes.map(q => q.ticker).join(', ')}`);
+      return quotes;
+    }
+
+    console.warn('[fetchStocks] All Finnhub calls failed — falling back to mock data');
+    return mock.getMockStocks();
   } catch (error) {
-    console.error('Error in fetchStocks:', error);
+    console.error('[fetchStocks] Unexpected error:', error);
     return mock.getMockStocks();
   }
 }

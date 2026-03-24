@@ -20,6 +20,11 @@ export default async function ContractorPage({ params }: { params: { ticker: str
   // Try to find the stock in all stocks
   const stock = allStocks.find(s => s.ticker === ticker);
 
+  // Override contractor mock price with live price if we got it from Finnhub
+  const liveContractor = contractor && stock && stock.price > 0
+    ? { ...contractor, price: stock.price, change: stock.change, changePct: stock.changePct }
+    : contractor;
+
   // Filter signals relevant to this ticker
   const relatedSignals = allSignals.filter(s => s.tickers.includes(ticker));
   const relatedGeo = geoRisk.filter(g => g.impactTickers.includes(ticker));
@@ -77,18 +82,18 @@ export default async function ContractorPage({ params }: { params: { ticker: str
           <div className="flex items-start justify-between flex-wrap gap-4">
             <div>
               <div className="flex items-center gap-3 mb-2">
-                <span className="font-mono text-2xl font-bold text-[var(--accent)]">{contractor.ticker}</span>
+                <span className="font-mono text-2xl font-bold text-[var(--accent)]">{liveContractor!.ticker}</span>
                 <span className="font-mono text-[10px] tracking-wider px-2 py-0.5 rounded bg-[rgba(0,255,80,0.06)] text-[var(--accent)] border border-[rgba(0,255,80,0.1)]">
-                  {contractor.sector}
+                  {liveContractor!.sector}
                 </span>
               </div>
-              <h1 className="text-xl font-bold text-[var(--text-bright)] mb-1">{contractor.name}</h1>
-              <p className="text-sm text-[var(--text-dim)] max-w-[600px] leading-relaxed">{contractor.description}</p>
+              <h1 className="text-xl font-bold text-[var(--text-bright)] mb-1">{liveContractor!.name}</h1>
+              <p className="text-sm text-[var(--text-dim)] max-w-[600px] leading-relaxed">{liveContractor!.description}</p>
             </div>
             <div className="text-right">
-              <div className="font-mono text-3xl font-bold text-[var(--text-bright)]">${contractor.price.toFixed(2)}</div>
-              <div className={`font-mono text-sm ${contractor.changePct >= 0 ? 'text-[var(--accent)]' : 'text-[var(--accent3)]'}`}>
-                {contractor.changePct >= 0 ? '▲' : '▼'} ${Math.abs(contractor.change).toFixed(2)} ({contractor.changePct >= 0 ? '+' : ''}{contractor.changePct.toFixed(2)}%)
+              <div className="font-mono text-3xl font-bold text-[var(--text-bright)]">${liveContractor!.price.toFixed(2)}</div>
+              <div className={`font-mono text-sm ${liveContractor!.changePct >= 0 ? 'text-[var(--accent)]' : 'text-[var(--accent3)]'}`}>
+                {liveContractor!.changePct >= 0 ? '▲' : '▼'} ${Math.abs(liveContractor!.change).toFixed(2)} ({liveContractor!.changePct >= 0 ? '+' : ''}{liveContractor!.changePct.toFixed(2)}%)
               </div>
             </div>
           </div>
@@ -104,7 +109,7 @@ export default async function ContractorPage({ params }: { params: { ticker: str
             <div className="glass p-5">
               <h3 className="font-mono text-xs text-[var(--accent)] tracking-[2px] mb-4">◆ KEY PROGRAMS</h3>
               <div className="flex flex-wrap gap-2">
-                {contractor.keyPrograms.map(p => (
+                {liveContractor!.keyPrograms.map(p => (
                   <span key={p} className="font-mono text-[10px] px-3 py-1.5 rounded bg-[rgba(0,255,80,0.06)] text-[var(--accent)] border border-[rgba(0,255,80,0.1)]">
                     {p}
                   </span>
@@ -116,7 +121,7 @@ export default async function ContractorPage({ params }: { params: { ticker: str
             <div className="glass p-5">
               <h3 className="font-mono text-xs text-[var(--accent2)] tracking-[2px] mb-4">◆ RECENT CONTRACTS</h3>
               <div className="space-y-3">
-                {contractor.recentContracts.map((c, i) => (
+                {liveContractor!.recentContracts.map((c, i) => (
                   <div key={i} className="flex items-start justify-between py-2 border-b border-[rgba(0,255,80,0.06)] last:border-none">
                     <div>
                       <h4 className="text-xs text-[var(--text-bright)] font-semibold mb-1">{c.title}</h4>
@@ -173,7 +178,7 @@ export default async function ContractorPage({ params }: { params: { ticker: str
             <div className="glass p-5">
               <h3 className="font-mono text-xs text-[var(--accent2)] tracking-[2px] mb-4">◆ FINANCIALS</h3>
               <div className="space-y-3">
-                {Object.entries(contractor.financials).map(([key, val]) => (
+                {Object.entries(liveContractor!.financials).map(([key, val]) => (
                   <div key={key} className="flex justify-between py-1 border-b border-[rgba(0,255,80,0.06)] last:border-none">
                     <span className="font-mono text-[10px] text-[var(--text-dim)] uppercase tracking-wider">
                       {key === 'pe' ? 'P/E Ratio' : key === 'divYield' ? 'Div Yield' : key.charAt(0).toUpperCase() + key.slice(1)}
@@ -188,7 +193,7 @@ export default async function ContractorPage({ params }: { params: { ticker: str
             <div className="glass p-5">
               <h3 className="font-mono text-xs text-[var(--accent3)] tracking-[2px] mb-4">◆ RISK FACTORS</h3>
               <div className="space-y-2">
-                {contractor.riskFactors.map((r, i) => (
+                {liveContractor!.riskFactors.map((r, i) => (
                   <div key={i} className="flex items-start gap-2 py-1.5">
                     <span className="text-[var(--accent3)] text-xs mt-0.5">⚠</span>
                     <span className="text-[11px] text-[var(--text-dim)] leading-snug">{r}</span>
@@ -201,7 +206,7 @@ export default async function ContractorPage({ params }: { params: { ticker: str
             <div className="glass p-5">
               <h3 className="font-mono text-xs text-[var(--accent)] tracking-[2px] mb-4">◆ RELATED</h3>
               <div className="flex flex-wrap gap-2">
-                {contractor.relatedTickers.map(t => (
+                {liveContractor!.relatedTickers.map(t => (
                   <Link key={t} href={`/contractor/${t}`} className="font-mono text-[10px] px-3 py-1.5 rounded bg-[rgba(0,255,80,0.06)] text-[var(--accent)] border border-[rgba(0,255,80,0.1)] no-underline hover:bg-[rgba(0,255,80,0.12)] transition-colors">
                     {t}
                   </Link>
