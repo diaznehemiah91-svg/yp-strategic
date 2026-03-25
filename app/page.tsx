@@ -15,6 +15,9 @@ import NexusSection from './components/NexusSection';
 import PricingSection from './components/PricingSection';
 import AdSlot from './components/AdSlot';
 import NavBar from './components/NavBar';
+import SectorHeatmap from './components/SectorHeatmap';
+import CorrelationMatrix from './components/CorrelationMatrix';
+import SectorMomentum from './components/SectorMomentum';
 
 export const revalidate = 60;
 
@@ -95,6 +98,12 @@ export default async function Home() {
         </div>
         <ContractorGrid stocks={stocks} />
 
+        {/* ── SECTOR HEATMAP ── */}
+        <div className="font-mono text-[10px] tracking-[3px] uppercase text-[var(--accent)] mb-4 flex items-center gap-2 fade-up d3">
+          <span className="w-6 h-px bg-[var(--accent)]" />◆ Heatmap: Performance Matrix
+        </div>
+        <SectorHeatmap stocks={stocks} />
+
         {/* ── SECTOR WATCHLIST ── */}
         <div className="font-mono text-[10px] tracking-[3px] uppercase text-[var(--accent)] mb-4 flex items-center gap-2 fade-up d4">
           <span className="w-6 h-px bg-[var(--accent)]" />◆ Sector Watchlist
@@ -122,6 +131,12 @@ export default async function Home() {
           <FuturesPanel futures={futures} />
         </div>
 
+        {/* ── SECTOR MOMENTUM ── */}
+        <div className="font-mono text-[10px] tracking-[3px] uppercase text-[var(--accent)] mb-4 flex items-center gap-2 fade-up d5">
+          <span className="w-6 h-px bg-[var(--accent)]" />◆ Sector Rotation
+        </div>
+        <SectorMomentum />
+
         {/* ── MACRO: FED + GEO RISK ── */}
         <div id="macro" className="font-mono text-[10px] tracking-[3px] uppercase text-[var(--accent)] mb-4 flex items-center gap-2 fade-up d5">
           <span className="w-6 h-px bg-[var(--accent)]" />◆ Macro Intelligence
@@ -130,6 +145,12 @@ export default async function Home() {
           <MacroPanel fedUpdates={fedUpdates} />
           <GeoRiskPanel events={geoRisk} />
         </div>
+
+        {/* ── CORRELATION MATRIX ── */}
+        <div className="font-mono text-[10px] tracking-[3px] uppercase text-[var(--accent)] mb-4 flex items-center gap-2 fade-up d6">
+          <span className="w-6 h-px bg-[var(--accent)]" />◆ Stock Correlations
+        </div>
+        <CorrelationMatrix />
 
         {/* ── AD: SIDEBAR ── */}
         <AdSlot id="ad-sidebar-1" size="300x250" className="ml-auto mb-7 h-[250px] w-[300px]" />
