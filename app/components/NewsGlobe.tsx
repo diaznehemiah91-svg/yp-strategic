@@ -1,92 +1,81 @@
 'use client'
 
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 
 interface NewsItem {
-  id: number
+  id: string
   source: string
   title: string
+  description?: string
   severity: 'critical' | 'high' | 'low'
   time: string
   category: string
+  url?: string
+  image?: string
   coordinates?: {
     lat: number
     lng: number
+    region: string
   }
 }
 
 export default function NewsGlobe() {
-  const containerRef = useRef<HTMLDivElement>(null)
   const [newsData, setNewsData] = useState<NewsItem[]>([])
   const [currentFilter, setCurrentFilter] = useState<'all' | 'critical' | 'high' | 'low'>('all')
-  const [autoRotate, setAutoRotate] = useState(true)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetchNewsFromGlint()
-    const interval = setInterval(fetchNewsFromGlint, 5 * 60 * 1000)
+    fetchNews()
+    const interval = setInterval(fetchNews, 5 * 60 * 1000)
     return () => clearInterval(interval)
   }, [])
 
-  const fetchNewsFromGlint = async () => {
+  const fetchNews = async () => {
     try {
       const response = await fetch('/api/news')
       if (response.ok) {
         const data = await response.json()
+        console.log('[NEWS] Fetched articles:', data.length)
         setNewsData(data.length > 0 ? data : getMockNewsData())
       } else {
+        console.warn('[NEWS] API returned non-ok status, using mock data')
         setNewsData(getMockNewsData())
       }
     } catch (error) {
-      console.warn('Could not fetch news, using mock data:', error)
+      console.warn('[NEWS] Fetch failed, using mock data:', error)
       setNewsData(getMockNewsData())
+    } finally {
+      setLoading(false)
     }
   }
 
   const getMockNewsData = (): NewsItem[] => [
     {
-      id: 1,
+      id: '1',
       source: 'NEXTA',
       title: 'Critical geopolitical event detected in Eastern Europe',
       severity: 'critical',
       time: '2m ago',
       category: 'GEOPOLITICS',
-      coordinates: { lat: 51.5074, lng: -0.1278 }
+      coordinates: { lat: 51.5074, lng: -0.1278, region: 'Europe' }
     },
     {
-      id: 2,
+      id: '2',
       source: 'Bloomberg',
       title: 'Global defence spending increases amid tensions',
       severity: 'high',
       time: '15m ago',
       category: 'DEFENCE',
-      coordinates: { lat: 40.7128, lng: -74.006 }
+      coordinates: { lat: 40.7128, lng: -74.006, region: 'North America' }
     },
     {
-      id: 3,
+      id: '3',
       source: 'Reuters',
       title: 'Regional stability concerns emerge',
       severity: 'high',
       time: '32m ago',
       category: 'GEOPOLITICS',
-      coordinates: { lat: 35.6762, lng: 139.6503 }
-    },
-    {
-      id: 4,
-      source: 'AP News',
-      title: 'Market recovery continues in tech sector',
-      severity: 'low',
-      time: '1h ago',
-      category: 'BUSINESS',
-      coordinates: { lat: -33.8688, lng: 151.2093 }
-    },
-    {
-      id: 5,
-      source: 'FT',
-      title: 'AI defence systems development accelerates',
-      severity: 'high',
-      time: '1h 23m ago',
-      category: 'AI/TECH',
-      coordinates: { lat: 48.8566, lng: 2.3522 }
+      coordinates: { lat: 35.6762, lng: 139.6503, region: 'Asia' }
     },
   ]
 
@@ -97,130 +86,97 @@ export default function NewsGlobe() {
   const getSeverityColor = (severity: string) => {
     switch (severity) {
       case 'critical':
-        return 'text-[#ff3232] border-[#ff3232] bg-[rgba(255,50,50,0.1)]'
+        return 'bg-[rgba(255,50,50,0.1)] border-l-[var(--accent3)] text-[var(--accent3)]'
       case 'high':
-        return 'text-[#ffa500] border-[#ffa500] bg-[rgba(255,165,0,0.1)]'
+        return 'bg-[rgba(255,165,0,0.1)] border-l-[var(--gold)] text-[var(--gold)]'
       case 'low':
-        return 'text-[#00c896] border-[#00c896] bg-[rgba(0,200,150,0.1)]'
+        return 'bg-[rgba(0,200,150,0.1)] border-l-[var(--accent)] text-[var(--accent)]'
       default:
-        return 'text-[var(--text-dim)]'
+        return 'bg-[rgba(0,255,200,0.05)] border-l-[var(--accent)]'
     }
   }
 
   return (
-    <div className="w-full bg-gradient-to-br from-black via-[rgba(10,14,39,0.8)] to-black border border-[var(--border)] rounded-lg overflow-hidden">
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 p-8">
-        {/* Globe Area */}
-        <div className="lg:col-span-2 h-[500px] relative rounded-lg border border-[var(--border)] bg-gradient-to-br from-[rgba(0,50,40,0.3)] to-[rgba(10,14,39,0.5)] overflow-hidden">
-          <div className="w-full h-full flex items-center justify-center">
-            <div className="text-center">
-              <div className="text-6xl mb-4">🌍</div>
-              <p className="text-[var(--text-dim)] text-sm">3D Globe Visualization</p>
-              <p className="text-[10px] text-[var(--text-dim)] mt-2">
-                {newsData.length} Global Events Tracked
-              </p>
-            </div>
-          </div>
-
-          {/* Globe Controls */}
-          <div className="absolute bottom-4 right-4 flex flex-col gap-2 z-10">
-            <button
-              onClick={() => setAutoRotate(!autoRotate)}
-              className="w-10 h-10 bg-[rgba(0,255,200,0.1)] border border-[var(--accent2)] rounded hover:bg-[rgba(0,255,200,0.2)] flex items-center justify-center text-[var(--accent2)] transition-all"
-              title="Toggle Auto Rotate"
-            >
-              ⟲
-            </button>
-            <button className="w-10 h-10 bg-[rgba(0,255,200,0.1)] border border-[var(--accent2)] rounded hover:bg-[rgba(0,255,200,0.2)] flex items-center justify-center text-[var(--accent2)] transition-all">
-              +
-            </button>
-            <button className="w-10 h-10 bg-[rgba(0,255,200,0.1)] border border-[var(--accent2)] rounded hover:bg-[rgba(0,255,200,0.2)] flex items-center justify-center text-[var(--accent2)] transition-all">
-              −
-            </button>
-          </div>
-
-          {/* Stats */}
-          <div className="absolute bottom-4 left-4 flex gap-6">
-            <div className="flex flex-col gap-1">
-              <span className="text-[9px] text-[var(--accent2)] uppercase tracking-widest opacity-70">Live Events</span>
-              <span className="text-2xl font-bold text-[var(--accent2)] font-mono">{newsData.length}</span>
-            </div>
-            <div className="flex flex-col gap-1">
-              <span className="text-[9px] text-[var(--accent2)] uppercase tracking-widest opacity-70">Sources</span>
-              <span className="text-2xl font-bold text-[var(--accent2)] font-mono">12+</span>
-            </div>
-          </div>
+    <div className="w-full bg-gradient-to-br from-[rgba(10,14,39,0.8)] via-black to-[rgba(10,14,39,0.6)] border border-[var(--border)] rounded-lg overflow-hidden mb-8 fade-up d6">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-[rgba(0,255,200,0.1)] to-transparent p-6 border-b border-[var(--border)]">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-black text-white uppercase tracking-tighter">🌐 Global News Intelligence</h2>
+          <span className="text-[10px] text-[var(--text-dim)] font-mono">{newsData.length} articles</span>
         </div>
 
-        {/* News Feed */}
-        <div className="lg:col-span-3 h-[500px] flex flex-col border border-[var(--border)] rounded-lg bg-[rgba(10,14,39,0.3)] overflow-hidden">
-          {/* Header */}
-          <div className="p-4 border-b border-[var(--border)] bg-gradient-to-r from-[rgba(0,255,200,0.1)] to-transparent">
-            <h3 className="text-[var(--accent2)] font-bold text-sm uppercase tracking-widest mb-4">
-              🌐 Global News Feed
-            </h3>
+        {/* Filters */}
+        <div className="flex gap-2 flex-wrap">
+          {(['all', 'critical', 'high', 'low'] as const).map((filter) => (
+            <button
+              key={filter}
+              onClick={() => setCurrentFilter(filter)}
+              className={`px-3 py-1.5 rounded text-xs font-bold uppercase tracking-widest transition-all border ${
+                currentFilter === filter
+                  ? 'bg-[rgba(0,255,200,0.2)] border-[var(--accent)] text-[var(--accent)]'
+                  : 'bg-transparent border-[var(--border)] text-[var(--text-dim)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
+              }`}
+            >
+              {filter === 'all' ? '📊 All Events' : `${filter === 'critical' ? '🔴' : filter === 'high' ? '🟠' : '🟢'} ${filter.charAt(0).toUpperCase() + filter.slice(1)}`}
+            </button>
+          ))}
+        </div>
+      </div>
 
-            {/* Filters */}
-            <div className="flex gap-2 flex-wrap">
-              {(['all', 'critical', 'high', 'low'] as const).map((filter) => (
-                <button
-                  key={filter}
-                  onClick={() => setCurrentFilter(filter)}
-                  className={`px-3 py-1 rounded text-xs font-bold uppercase tracking-widest transition-all border ${
-                    currentFilter === filter
-                      ? 'bg-[rgba(0,255,200,0.2)] border-[var(--accent2)] text-[var(--accent2)]'
-                      : 'bg-transparent border-[var(--border)] text-[var(--text-dim)] hover:border-[var(--accent2)] hover:text-[var(--accent2)]'
-                  }`}
-                >
-                  {filter === 'all' ? 'All Events' : `${filter.charAt(0).toUpperCase() + filter.slice(1)} Priority`}
-                </button>
-              ))}
-            </div>
+      {/* News Feed */}
+      <div className="max-h-[600px] overflow-y-auto">
+        {loading ? (
+          <div className="p-8 text-center text-[var(--text-dim)]">
+            <p className="animate-pulse">Loading intelligence feed...</p>
           </div>
-
-          {/* News Items */}
-          <div className="flex-1 overflow-y-auto">
-            {filteredNews.length > 0 ? (
-              filteredNews.map((item) => (
-                <div
-                  key={item.id}
-                  className="p-4 border-b border-[var(--border)] hover:bg-[rgba(0,255,200,0.05)] transition-all cursor-pointer group"
-                >
-                  <div className="flex justify-between items-start gap-2 mb-2">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] bg-[rgba(0,255,200,0.2)] text-[var(--accent2)] px-2 py-1 rounded font-bold">
-                        {item.source}
-                      </span>
-                      <span className="text-[11px] text-[var(--text-dim)]">{item.time}</span>
-                    </div>
-                    <span className={`text-[9px] font-bold px-2 py-1 rounded border ${getSeverityColor(item.severity)} uppercase`}>
-                      {item.severity}
+        ) : filteredNews.length === 0 ? (
+          <div className="p-8 text-center text-[var(--text-dim)]">
+            <p>No articles in this category</p>
+          </div>
+        ) : (
+          filteredNews.map((article) => (
+            <a
+              key={article.id}
+              href={article.url || '#'}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`block p-4 border-b border-[var(--border)] border-l-4 transition-all hover:bg-[rgba(0,255,200,0.05)] cursor-pointer ${getSeverityColor(article.severity)}`}
+            >
+              <div className="flex items-start justify-between gap-3 mb-2">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-[10px] bg-[rgba(0,255,200,0.2)] text-[var(--accent)] px-2 py-1 rounded font-bold">
+                      {article.source}
                     </span>
+                    <span className="text-[9px] text-[var(--text-dim)]">{article.time}</span>
                   </div>
-
-                  <h4 className="text-sm text-white mb-2 font-semibold group-hover:text-[var(--accent2)] transition-colors">
-                    {item.title}
-                  </h4>
-
-                  <div className="flex gap-3 text-[10px] text-[var(--text-dim)]">
-                    <span className="bg-[rgba(0,255,200,0.1)] px-2 py-1 rounded">
-                      {item.category}
+                  <h3 className="text-sm font-bold text-white mb-1 leading-tight">
+                    {article.title}
+                  </h3>
+                  <div className="flex gap-2 flex-wrap">
+                    <span className="text-[9px] bg-[rgba(0,255,200,0.1)] text-[var(--text-dim)] px-2 py-0.5 rounded">
+                      {article.category}
                     </span>
+                    {article.coordinates && (
+                      <span className="text-[9px] text-[var(--text-dim)]">
+                        📍 {article.coordinates.region}
+                      </span>
+                    )}
                   </div>
                 </div>
-              ))
-            ) : (
-              <div className="h-full flex items-center justify-center text-[var(--text-dim)] text-sm">
-                No news items in this category
+                <span className={`text-[9px] font-bold px-2 py-1 rounded whitespace-nowrap ${getSeverityColor(article.severity).split(' ')[0]}`}>
+                  {article.severity.toUpperCase()}
+                </span>
               </div>
-            )}
-          </div>
+            </a>
+          ))
+        )}
+      </div>
 
-          {/* Footer */}
-          <div className="p-3 border-t border-[var(--border)] bg-[rgba(0,0,0,0.3)] text-[9px] text-[var(--text-dim)] text-center">
-            Last updated: {new Date().toLocaleTimeString()}
-          </div>
-        </div>
+      {/* Footer */}
+      <div className="p-4 bg-[rgba(0,0,0,0.3)] border-t border-[var(--border)] text-[9px] text-[var(--text-dim)] text-center">
+        <p>Real-time data from 40K+ news sources • Updates every 5 minutes</p>
+        <p className="mt-1">Click articles to read full intelligence • Powered by NewsAPI</p>
       </div>
     </div>
   )
