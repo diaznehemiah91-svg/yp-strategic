@@ -72,7 +72,6 @@ export default function NavBar() {
     <SearchTerminal
       open={searchOpen}
       onClose={() => setSearchOpen(false)}
-      onSelect={() => setSearchOpen(false)}
     />
     </>
   );

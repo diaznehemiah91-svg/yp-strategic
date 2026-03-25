@@ -9,7 +9,6 @@ import FuturesPanel from './components/FuturesPanel';
 import MacroPanel from './components/MacroPanel';
 import GeoRiskPanel from './components/GeoRiskPanel';
 import ContractorGrid from './components/ContractorGrid';
-import SearchableTerminal from './components/SearchableTerminal';
 import ForgeSection from './components/ForgeSection';
 import NexusSection from './components/NexusSection';
 import PricingSection from './components/PricingSection';
@@ -104,11 +103,18 @@ export default async function Home() {
         </div>
         <SectorHeatmap stocks={stocks} />
 
-        {/* ── SECTOR WATCHLIST ── */}
-        <div className="font-mono text-[10px] tracking-[3px] uppercase text-[var(--accent)] mb-4 flex items-center gap-2 fade-up d4">
-          <span className="w-6 h-px bg-[var(--accent)]" />◆ Sector Watchlist
+        {/* ── GLOBAL SEARCH TIP ── */}
+        <div className="glass p-6 mb-7 fade-up d4 border border-[var(--border)]">
+          <div className="font-mono text-[10px] tracking-[3px] uppercase text-[var(--accent)] mb-3 flex items-center gap-2">
+            <span className="w-6 h-px bg-[var(--accent)]" />◆ Quick Search
+          </div>
+          <p className="font-mono text-[13px] text-[var(--text-bright)] mb-2">
+            Press <span className="font-bold text-[var(--accent)]">⌘K</span> (Mac) or <span className="font-bold text-[var(--accent)]">Ctrl+K</span> (Windows) to search across 50+ tickers
+          </p>
+          <p className="font-mono text-[11px] text-[var(--text-dim)]">
+            Start typing a ticker symbol or company name to discover stocks, signals, and market data instantly.
+          </p>
         </div>
-        <SearchableTerminal />
 
         {/* ── SIGNAL + BRIDGEPATH ── */}
         <div id="signal" className="font-mono text-[10px] tracking-[3px] uppercase text-[var(--accent)] mb-4 flex items-center gap-2 fade-up d5">

@@ -447,7 +447,6 @@ export default function DashboardClient({
       <SearchTerminal
         open={searchOpen}
         onClose={() => setSearchOpen(false)}
-        onSelect={openModal}
       />
 
       {/* ── Ticker Modal ── */}

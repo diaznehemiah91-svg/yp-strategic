@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { X, Search } from 'lucide-react';
 import { getMockStocks, getMockSignals } from '@/app/lib/mock-data';
 
@@ -22,7 +23,6 @@ interface SignalResult {
 interface Props {
   open: boolean;
   onClose: () => void;
-  onSelect: (ticker: string) => void;
 }
 
 const ALL_STOCKS = getMockStocks();
@@ -34,7 +34,8 @@ const SEVERITY_COLOR: Record<string, string> = {
   INFO: 'text-[var(--accent2)]',
 };
 
-export default function SearchTerminal({ open, onClose, onSelect }: Props) {
+export default function SearchTerminal({ open, onClose }: Props) {
+  const router = useRouter();
   const [query, setQuery] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -76,7 +77,7 @@ export default function SearchTerminal({ open, onClose, onSelect }: Props) {
     : [];
 
   const handleSelect = (ticker: string) => {
-    onSelect(ticker);
+    router.push(`/contractor/${ticker}`);
     onClose();
   };
 
