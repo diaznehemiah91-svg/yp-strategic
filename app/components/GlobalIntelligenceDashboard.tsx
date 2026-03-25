@@ -96,29 +96,76 @@ export default function GlobalIntelligenceDashboard() {
     canvas.height = 1024
     const ctx = canvas.getContext('2d')!
 
+    // Helper: convert lat/lng to pixel coordinates
+    const latLngToPixel = (lat: number, lng: number) => {
+      const x = ((lng + 180) / 360) * canvas.width
+      const y = ((90 - lat) / 180) * canvas.height
+      return { x, y }
+    }
+
     // Deep blue oceans
-    ctx.fillStyle = '#0a1929'
+    ctx.fillStyle = '#061a3a'
     ctx.fillRect(0, 0, canvas.width, canvas.height)
 
-    // Add continents (simplified)
-    ctx.fillStyle = '#1a3a3a'
+    // Land masses - brighter, more visible colors
+    ctx.fillStyle = '#2a6a3a'  // Forest green for land
+
     // North America
-    ctx.fillRect(100, 300, 250, 200)
+    const naStart = latLngToPixel(50, -130)
+    const naEnd = latLngToPixel(25, -80)
+    ctx.fillRect(naStart.x, naEnd.y, naEnd.x - naStart.x, naStart.y - naEnd.y)
+
     // South America
-    ctx.fillRect(350, 500, 150, 200)
-    // Europe
-    ctx.fillRect(800, 250, 200, 150)
+    const saStart = latLngToPixel(15, -80)
+    const saEnd = latLngToPixel(-56, -35)
+    ctx.fillRect(saStart.x, saEnd.y, saEnd.x - saStart.x, saStart.y - saEnd.y)
+
+    // Europe & Africa
+    const eurStart = latLngToPixel(60, -10)
+    const eurEnd = latLngToPixel(36, 45)
+    ctx.fillRect(eurStart.x, eurEnd.y, eurEnd.x - eurStart.x, eurStart.y - eurEnd.y)
+
     // Africa
-    ctx.fillRect(900, 450, 250, 300)
-    // Asia
-    ctx.fillRect(1300, 250, 400, 300)
-    // Australia
-    ctx.fillRect(1600, 650, 150, 120)
+    const afStart = latLngToPixel(37, -20)
+    const afEnd = latLngToPixel(-35, 55)
+    ctx.fillRect(afStart.x, afEnd.y, afEnd.x - afStart.x, afStart.y - afEnd.y)
+
+    // Middle East/Western Asia
+    ctx.fillStyle = '#3a7a4a'
+    const meStart = latLngToPixel(40, 25)
+    const meEnd = latLngToPixel(15, 70)
+    ctx.fillRect(meStart.x, meEnd.y, meEnd.x - meStart.x, meStart.y - meEnd.y)
+
+    // Central/East Asia
+    ctx.fillStyle = '#2a6a3a'
+    const asiaStart = latLngToPixel(55, 60)
+    const asiaEnd = latLngToPixel(15, 150)
+    ctx.fillRect(asiaStart.x, asiaEnd.y, asiaEnd.x - asiaStart.x, asiaStart.y - asiaEnd.y)
+
+    // Southeast Asia & Australia
+    ctx.fillStyle = '#3a7a4a'
+    const seaStart = latLngToPixel(20, 95)
+    const seaEnd = latLngToPixel(-45, 180)
+    ctx.fillRect(seaStart.x, seaEnd.y, seaEnd.x - seaStart.x, seaStart.y - seaEnd.y)
+
+    // Greenland
+    ctx.fillStyle = '#2a6a3a'
+    const glStart = latLngToPixel(83, -45)
+    const glEnd = latLngToPixel(60, 10)
+    ctx.fillRect(glStart.x, glEnd.y, glEnd.x - glStart.x, glStart.y - glEnd.y)
+
+    // Add subtle shading/noise for realism
+    ctx.fillStyle = 'rgba(42, 106, 58, 0.3)'
+    for (let i = 0; i < 500; i++) {
+      const x = Math.random() * canvas.width
+      const y = Math.random() * canvas.height
+      ctx.fillRect(x, y, Math.random() * 100 + 20, Math.random() * 80 + 10)
+    }
 
     // Add grid overlay
-    ctx.strokeStyle = 'rgba(0, 255, 136, 0.15)'
+    ctx.strokeStyle = 'rgba(0, 255, 136, 0.08)'
     ctx.lineWidth = 1
-    for (let i = 0; i < canvas.width; i += 128) {
+    for (let i = 0; i < canvas.width; i += 256) {
       ctx.beginPath()
       ctx.moveTo(i, 0)
       ctx.lineTo(i, canvas.height)
