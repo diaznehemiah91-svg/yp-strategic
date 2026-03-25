@@ -1,160 +1,94 @@
 'use client'
 
 import { useState } from 'react'
-import { Cpu, Download, AlertCircle } from 'lucide-react'
+import { Zap, Terminal, Copy } from 'lucide-react'
 
-export default function ForgePage() {
-  const [input, setInput] = useState('')
-  const [ticker, setTicker] = useState('PLTR')
-  const [code, setCode] = useState('// Your generated Pine Script will appear here...\n// Press GENERATE SCRIPT to create a trading strategy')
+export default function ForgeMonster() {
+  const [prompt, setPrompt] = useState('')
+  const [script, setScript] = useState('// INITIALIZE FORGE TO GENERATE SCRIPT...')
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
 
-  const generateStrategy = async () => {
-    if (!input.trim()) {
-      setError('Please describe your trading strategy first.')
-      return
-    }
+  const handleForge = async () => {
+    if (!prompt.trim()) return
 
     setLoading(true)
-    setError(null)
-
     try {
-      const response = await fetch('/api/forge/generate', {
+      const res = await fetch('/api/forge/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: input, ticker }),
+        body: JSON.stringify({ prompt, ticker: 'GLOBAL' }),
       })
-
-      if (!response.ok) throw new Error('Forge engine overload')
-
-      const data = await response.json()
-      setCode(data.script || 'Error generating script')
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to generate script')
-      setCode('// Error generating Pine Script\n// Check your API key and try again.')
+      const data = await res.json()
+      setScript(data.script || 'Error generating script')
+    } catch (error) {
+      setScript('// Error: Failed to generate script. Check your connection.')
     } finally {
       setLoading(false)
     }
   }
 
-  const exportScript = () => {
-    const element = document.createElement('a')
-    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(code))
-    element.setAttribute('download', `${ticker}_strategy.pine`)
-    element.style.display = 'none'
-    document.body.appendChild(element)
-    element.click()
-    document.body.removeChild(element)
+  const copyScript = () => {
+    navigator.clipboard.writeText(script)
   }
 
   return (
-    <main className="min-h-screen bg-black text-[var(--accent)] font-mono pt-6 pb-12">
-      <div className="max-w-7xl mx-auto px-4">
-        {/* Header */}
-        <div className="glass mb-6 border border-[var(--border)] p-6 fade-up d1">
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <Cpu className="animate-pulse" size={24} />
-              <div>
-                <h1 className="font-black uppercase tracking-tighter text-2xl">FORGE</h1>
-                <p className="text-[10px] text-[var(--text-dim)] uppercase tracking-widest">AI-Powered Trading Strategy Generator</p>
-              </div>
-            </div>
-            <button
-              onClick={exportScript}
-              disabled={code.startsWith('//')}
-              className="flex items-center gap-2 text-[10px] border border-[var(--accent)] px-4 py-2 hover:bg-[var(--accent)]/10 transition-all disabled:opacity-50 disabled:cursor-not-allowed uppercase font-bold tracking-widest"
-            >
-              <Download size={12} /> Export Pine
-            </button>
-          </div>
-          <p className="text-[11px] text-[var(--text-dim)]">
-            Describe your trading strategy and Forge will generate professional TradingView Pine Script v5 code.
-          </p>
-        </div>
+    <div className="min-h-screen bg-black text-[var(--accent)] font-mono p-4">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-4">
+        {/* Input Sidebar */}
+        <div className="lg:col-span-4 space-y-4">
+          <div className="border border-[var(--border)] bg-[var(--surface)] p-6 shadow-[0_0_20px_rgba(0,255,80,0.05)]">
+            <h2 className="text-xl font-black mb-4 flex items-center gap-2">
+              <Zap size={20} className="fill-[var(--accent)]" /> FORGE MONSTER
+            </h2>
+            <p className="text-[10px] text-[var(--text-dim)] mb-6 leading-tight uppercase tracking-widest">
+              Neural Engine v4.1 // Pine Script Generator
+            </p>
 
-        {/* Main Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 fade-up d2">
-          {/* Input Section */}
-          <div className="glass border border-[var(--border)] p-6 flex flex-col gap-4 h-[600px]">
-            <div>
-              <label className="text-[10px] text-[var(--text-dim)] uppercase font-bold tracking-widest block mb-2">
-                Ticker Symbol
-              </label>
-              <input
-                type="text"
-                value={ticker}
-                onChange={(e) => setTicker(e.target.value.toUpperCase())}
-                placeholder="e.g. PLTR, RTX, LMT"
-                className="w-full bg-[var(--surface2)] border border-[var(--border)] px-3 py-2 text-[13px] text-[var(--text-bright)] placeholder:text-[var(--text-dim)] outline-none focus:border-[var(--accent)] transition-all rounded font-mono mb-4"
-              />
-            </div>
-
-            <div className="flex-1 flex flex-col">
-              <label className="text-[10px] text-[var(--text-dim)] uppercase font-bold tracking-widest mb-2">
-                Strategy Parameters
-              </label>
-              <textarea
-                className="flex-1 bg-[var(--surface2)] border border-[var(--border)] px-3 py-3 text-[13px] text-[var(--text-bright)] placeholder:text-[var(--text-dim)] outline-none focus:border-[var(--accent)] transition-all rounded resize-none font-mono"
-                placeholder={`Example: Build a buy signal when:\n- RSI dips below 30 (oversold)\n- Volume spikes 20% above 20-day avg\n- Price breaks above 50-day MA\n\nUse red (#ff3355) for sells, green (#00ff52) for buys.`}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-              />
-            </div>
-
-            {error && (
-              <div className="flex gap-2 bg-[var(--accent3)]/10 border border-[var(--accent3)]/30 px-3 py-2 rounded text-[11px] text-[var(--accent3)]">
-                <AlertCircle size={14} className="shrink-0 mt-0.5" />
-                <span>{error}</span>
-              </div>
-            )}
+            <textarea
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              placeholder="Describe your 'Monster' strategy (e.g. 3-EMA cross with Volume Spike and RSI Divergence)..."
+              className="w-full h-48 bg-black border border-[var(--border)] p-4 text-sm text-[var(--text-bright)] placeholder:text-[var(--text-dim)] focus:border-[var(--accent)] outline-none transition-all font-mono"
+            />
 
             <button
-              onClick={generateStrategy}
-              disabled={loading}
-              className="w-full bg-[var(--accent)] text-black font-black py-3 hover:bg-white transition-all uppercase text-[12px] tracking-widest disabled:opacity-50 disabled:cursor-not-allowed rounded"
+              onClick={handleForge}
+              disabled={loading || !prompt.trim()}
+              className="w-full mt-4 bg-[var(--accent)] text-black font-black py-4 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all uppercase tracking-tighter"
             >
-              {loading ? 'SEQUENCING...' : 'GENERATE SCRIPT'}
+              {loading ? 'COMPILING NEURAL PATHS...' : 'CONSTRUCT SCRIPT'}
             </button>
-          </div>
-
-          {/* Code Output Section */}
-          <div className="glass border border-[var(--border)] p-6 flex flex-col h-[600px] relative bg-black/80">
-            <div className="flex justify-between items-center mb-3 pb-3 border-b border-[var(--border)]">
-              <span className="text-[10px] text-[var(--text-dim)] uppercase font-bold tracking-widest">Output: Pine Script v5</span>
-              <span className="text-[9px] bg-[var(--surface2)] px-2 py-1 rounded text-[var(--text-dim)]">
-                {code.split('\n').length} lines
-              </span>
-            </div>
-            <pre className="flex-1 overflow-auto text-[12px] text-[var(--accent2)] leading-relaxed whitespace-pre-wrap break-words scrollbar-thin scrollbar-thumb-[var(--border)] scrollbar-track-black">
-              <code>{code}</code>
-            </pre>
           </div>
         </div>
 
-        {/* Info Section */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6 fade-up d3">
-          <div className="glass border border-[var(--border)] p-4">
-            <p className="text-[10px] uppercase font-bold text-[var(--text-dim)] tracking-widest mb-2">📊 Supported Indicators</p>
-            <p className="text-[11px] text-[var(--text-dim)] leading-relaxed">
-              RSI, MACD, Bollinger Bands, Moving Averages, Volume Analysis, Momentum, Divergence Detection
-            </p>
+        {/* Code Output Area */}
+        <div className="lg:col-span-8 border border-[var(--border)] bg-black relative">
+          <div className="absolute top-0 left-0 right-0 bg-[var(--surface2)] p-2 border-b border-[var(--border)] flex justify-between items-center">
+            <span className="text-[9px] font-bold text-[var(--text-dim)] px-2 flex items-center gap-2">
+              <Terminal size={12} /> OUTPUT_STREAM_V5.PINE
+            </span>
+            <button
+              onClick={copyScript}
+              className="text-[9px] hover:text-[var(--accent)] flex items-center gap-1 bg-[var(--surface2)] hover:bg-[var(--surface)] px-2 py-1 transition-all"
+            >
+              <Copy size={12} /> COPY_TO_TRADINGVIEW
+            </button>
           </div>
-          <div className="glass border border-[var(--border)] p-4">
-            <p className="text-[10px] uppercase font-bold text-[var(--text-dim)] tracking-widest mb-2">⚙️ Output Format</p>
-            <p className="text-[11px] text-[var(--text-dim)] leading-relaxed">
-              Professional Pine Script v5 with comments, color coding, and optimized for TradingView charts
-            </p>
-          </div>
-          <div className="glass border border-[var(--border)] p-4">
-            <p className="text-[10px] uppercase font-bold text-[var(--text-dim)] tracking-widest mb-2">🚀 Next Step</p>
-            <p className="text-[11px] text-[var(--text-dim)] leading-relaxed">
-              Copy the script to TradingView Pine Script Editor and backtest on historical data
-            </p>
-          </div>
+
+          <pre className="p-8 pt-14 text-sm text-[var(--accent2)] overflow-auto h-[700px] leading-relaxed whitespace-pre-wrap break-words scrollbar-thin scrollbar-thumb-[var(--border)] scrollbar-track-black">
+            <code>{script}</code>
+          </pre>
+
+          {loading && (
+            <div className="absolute inset-0 bg-black/80 flex items-center justify-center backdrop-blur-sm">
+              <div className="text-center">
+                <div className="w-16 h-16 border-4 border-[var(--accent)] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                <p className="animate-pulse text-xs tracking-[0.5em] text-[var(--accent)]">GENERATING_LOGIC</p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
-    </main>
+    </div>
   )
 }
