@@ -24,6 +24,7 @@ export default function NavBar() {
 
   const navItems = [
     { label: 'Signal Wire', href: '/signal', icon: '📡' },
+    { label: 'News', href: '/news', icon: '🌐' },
     { label: 'Nexus Map', href: '/nexus', icon: '🗺' },
     { label: 'Tech Levels', href: '/levels', icon: '📊' },
     { label: 'Assets', href: '/assets', icon: '⚡' },
