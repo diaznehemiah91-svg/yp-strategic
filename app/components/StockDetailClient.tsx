@@ -200,12 +200,13 @@ export default function StockDetailClient({
           {/* CHART PLACEHOLDER */}
           <div className="glass p-5">
             <h3 className="font-mono text-xs text-[var(--accent)] tracking-[2px] mb-4">◆ PRICE CHART</h3>
-            <div className="bg-[rgba(0,255,80,0.02)] rounded border border-[rgba(0,255,80,0.1)] h-64 flex items-center justify-center">
-              <div className="text-center">
-                <p className="text-[var(--text-dim)] text-sm mb-2">📈 Interactive Chart Coming Soon</p>
-                <p className="text-[10px] text-[var(--text-dim)]">Lightweight charting library integration in progress</p>
-                <p className="text-[10px] text-[var(--accent)] mt-2">Real-time price data available from Alpha Vantage API</p>
-              </div>
+            <div className="bg-[rgba(0,255,80,0.02)] rounded border border-[rgba(0,255,80,0.1)] h-[500px] overflow-hidden">
+              <iframe
+                src={`https://s.tradingview.com/widgetembed/?frameElementId=tradingview_widget&symbol=${ticker}&interval=D&hidesidetoolbar=0&symboledit=1&saveimage=1&toolbarbg=f1f3f6&theme=dark&style=1&timezone=America%2FNew_York&withdateranges=1&showpopupbutton=1&locale=en`}
+                style={{width: "100%", height: "100%", border: "none"}}
+                allowFullScreen
+                title={`${ticker} TradingView Chart`}
+              />
             </div>
           </div>
 
@@ -214,7 +215,7 @@ export default function StockDetailClient({
             <div className="glass p-5">
               <h3 className="font-mono text-xs text-[var(--accent2)] tracking-[2px] mb-4">◆ RELATED SIGNALS & NEWS</h3>
               <div className="space-y-3">
-                {signals.slice(0, 5).map((signal) => (
+                {signals.slice(0, 10).map((signal) => (
                   <div key={signal.id} className="py-3 border-b border-[rgba(0,255,80,0.06)] last:border-none">
                     <div className="flex items-start justify-between gap-2 mb-1">
                       <h4 className="text-xs text-[var(--text-bright)] font-semibold flex-1">{signal.title}</h4>
@@ -251,7 +252,7 @@ export default function StockDetailClient({
             <div className="glass p-5 border border-[rgba(255,165,0,0.2)]">
               <h3 className="font-mono text-xs text-[#ffa500] tracking-[2px] mb-4">⚠ GEOPOLITICAL IMPACT</h3>
               <div className="space-y-3">
-                {geoRisk.slice(0, 3).map((event) => (
+                {geoRisk.slice(0, 6).map((event) => (
                   <div key={event.id} className="py-2 border-b border-[rgba(255,165,0,0.1)] last:border-none">
                     <div className="flex items-start justify-between gap-2 mb-1">
                       <h4 className="text-xs text-[var(--text-bright)] font-semibold flex-1">{event.title}</h4>
