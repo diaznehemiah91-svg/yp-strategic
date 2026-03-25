@@ -17,6 +17,7 @@ import NavBar from './components/NavBar';
 import SectorHeatmap from './components/SectorHeatmap';
 import CorrelationMatrix from './components/CorrelationMatrix';
 import SectorMomentum from './components/SectorMomentum';
+import NewsGlobe from './components/NewsGlobe';
 
 export const revalidate = 60;
 
@@ -150,6 +151,14 @@ export default async function Home() {
         <div className="grid grid-cols-2 gap-4 mb-7 fade-up d5" style={{ gridTemplateColumns: '1fr 1fr' }}>
           <MacroPanel fedUpdates={fedUpdates} />
           <GeoRiskPanel events={geoRisk} />
+        </div>
+
+        {/* ── GLOBAL NEWS INTELLIGENCE ── */}
+        <div className="font-mono text-[10px] tracking-[3px] uppercase text-[var(--accent)] mb-4 flex items-center gap-2 fade-up d6">
+          <span className="w-6 h-px bg-[var(--accent)]" />◆ Global News Intelligence
+        </div>
+        <div className="mb-7 fade-up d6">
+          <NewsGlobe />
         </div>
 
         {/* ── CORRELATION MATRIX ── */}
