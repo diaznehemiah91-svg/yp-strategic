@@ -9,7 +9,7 @@ import FuturesPanel from './components/FuturesPanel';
 import MacroPanel from './components/MacroPanel';
 import GeoRiskPanel from './components/GeoRiskPanel';
 import ContractorGrid from './components/ContractorGrid';
-import Forge3DScene from './components/Forge3DScene';
+import GlobalOperationsGlobe from './components/GlobalOperationsGlobe';
 import NexusSection from './components/NexusSection';
 import PricingSection from './components/PricingSection';
 import AdSlot from './components/AdSlot';
@@ -172,7 +172,7 @@ export default async function Home() {
 
         {/* ── FORGE ── */}
         <div id="forge">
-          <Forge3DScene />
+          <GlobalOperationsGlobe />
         </div>
 
         {/* ── NEXUS ── */}
