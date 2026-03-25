@@ -169,12 +169,15 @@ export default async function Home() {
 
         {/* ── AD: SIDEBAR ── */}
         <AdSlot id="ad-sidebar-1" size="300x250" className="ml-auto mb-7 h-[250px] w-[300px]" />
+      </div>
 
-        {/* ── GLOBAL INTELLIGENCE COMMAND CENTER ── */}
-        <div id="forge" className="w-screen h-screen -mx-5">
-          <GlobalIntelligenceDashboard />
-        </div>
+      {/* ── GLOBAL INTELLIGENCE COMMAND CENTER ── */}
+      <div id="forge" className="w-full h-screen relative z-10">
+        <GlobalIntelligenceDashboard />
+      </div>
 
+      {/* ── NEXUS + PRICING + FOOTER ── */}
+      <div className="relative z-10 max-w-[1260px] mx-auto px-5 pt-6 pb-20">
         {/* ── NEXUS ── */}
         <div id="nexus">
           <NexusSection />
