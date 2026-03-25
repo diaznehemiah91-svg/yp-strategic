@@ -9,7 +9,7 @@ import FuturesPanel from './components/FuturesPanel';
 import MacroPanel from './components/MacroPanel';
 import GeoRiskPanel from './components/GeoRiskPanel';
 import ContractorGrid from './components/ContractorGrid';
-import GlobalStockGlobe from './components/GlobalStockGlobe';
+import GlobalIntelligenceDashboard from './components/GlobalIntelligenceDashboard';
 import NexusSection from './components/NexusSection';
 import PricingSection from './components/PricingSection';
 import AdSlot from './components/AdSlot';
@@ -170,9 +170,9 @@ export default async function Home() {
         {/* ── AD: SIDEBAR ── */}
         <AdSlot id="ad-sidebar-1" size="300x250" className="ml-auto mb-7 h-[250px] w-[300px]" />
 
-        {/* ── FORGE ── */}
-        <div id="forge">
-          <GlobalStockGlobe />
+        {/* ── GLOBAL INTELLIGENCE COMMAND CENTER ── */}
+        <div id="forge" className="w-screen h-screen -mx-5">
+          <GlobalIntelligenceDashboard />
         </div>
 
         {/* ── NEXUS ── */}
