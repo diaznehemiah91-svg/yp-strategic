@@ -26,6 +26,7 @@ export default function NavBar() {
     { label: 'Signal Wire', href: '/signal', icon: '📡' },
     { label: 'Nexus Map', href: '/nexus', icon: '🗺' },
     { label: 'Digital Assets', href: '/crypto', icon: '💰' },
+    { label: 'Tech Levels', href: '/levels', icon: '📊' },
     { label: 'Forge IDE', href: '/forge', icon: '⚙️', highlight: true },
   ]
 

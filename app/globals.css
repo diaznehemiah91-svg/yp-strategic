@@ -98,6 +98,26 @@ body {
 
 /* ── SCROLLBAR ── */
 ::-webkit-scrollbar { width: 6px; }
+
+/* ── TICKER STYLES ── */
+.ticker-negative {
+  color: #FF4444;
+  border-left: 2px solid #FF4444;
+  background: linear-gradient(90deg, rgba(255, 68, 68, 0.1) 0%, transparent 100%);
+  text-shadow: 0 0 5px rgba(255, 68, 68, 0.5);
+}
+
+.ticker-positive {
+  color: #00FF41;
+  border-left: 2px solid #00FF41;
+  background: linear-gradient(90deg, rgba(0, 255, 65, 0.1) 0%, transparent 100%);
+}
+
+.ticker-neutral {
+  color: #f0c040;
+  border-left: 2px solid #f0c040;
+  background: linear-gradient(90deg, rgba(240, 192, 64, 0.1) 0%, transparent 100%);
+}
 ::-webkit-scrollbar-track { background: var(--bg); }
 ::-webkit-scrollbar-thumb { background: rgba(0,255,80,0.15); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(0,255,80,0.3); }
