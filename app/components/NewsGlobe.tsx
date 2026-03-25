@@ -23,19 +23,21 @@ export default function NewsGlobe() {
 
   useEffect(() => {
     fetchNewsFromGlint()
+    const interval = setInterval(fetchNewsFromGlint, 5 * 60 * 1000)
+    return () => clearInterval(interval)
   }, [])
 
   const fetchNewsFromGlint = async () => {
     try {
-      const response = await fetch('/api/glint-news')
+      const response = await fetch('/api/news')
       if (response.ok) {
         const data = await response.json()
-        setNewsData(data)
+        setNewsData(data.length > 0 ? data : getMockNewsData())
       } else {
         setNewsData(getMockNewsData())
       }
     } catch (error) {
-      console.warn('Could not fetch from Glint API, using mock data:', error)
+      console.warn('Could not fetch news, using mock data:', error)
       setNewsData(getMockNewsData())
     }
   }
