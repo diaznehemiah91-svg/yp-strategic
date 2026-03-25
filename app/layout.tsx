@@ -20,6 +20,9 @@ export const metadata: Metadata = {
     description: 'Defence-Tech Intelligence Platform',
   },
   robots: { index: true, follow: true },
+  other: {
+    'google-adsense-account': 'ca-pub-8574202486932134',
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
