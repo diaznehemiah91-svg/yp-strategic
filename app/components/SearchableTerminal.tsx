@@ -1,5 +1,6 @@
 'use client';
 import { useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import useSWR from 'swr';
 import { X, Search, TrendingUp, TrendingDown } from 'lucide-react';
 import MiniChart from './MiniChart';
@@ -85,106 +86,11 @@ function TickerRow({
   );
 }
 
-// ── Ticker detail modal ──
-function TickerModal({
-  ticker,
-  onClose,
-}: {
-  ticker: string;
-  onClose: () => void;
-}) {
-  const { data } = useSWR<PriceData>(
-    `/api/stock-price?symbol=${ticker}`,
-    fetcher,
-    { refreshInterval: 60000, revalidateOnFocus: false }
-  );
-
-  const price = data?.price ?? 0;
-  const change = data?.change ?? 0;
-  const changePct = data?.changePercent ?? 0;
-  const up = changePct >= 0;
-
-  // Find category
-  const category = Object.entries(CATEGORIES).find(([, tickers]) =>
-    tickers.includes(ticker)
-  )?.[0] ?? '';
-  const catColor = CATEGORY_COLOR[category] ?? 'var(--accent)';
-
-  return (
-    <div
-      className="fixed inset-0 z-[200] flex items-center justify-center p-4"
-      onClick={onClose}
-    >
-      <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" />
-      <div
-        className="glass relative w-full max-w-lg overflow-hidden"
-        style={{ border: '1px solid var(--border-bright)' }}
-        onClick={e => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)]">
-          <div className="flex items-center gap-3">
-            <span
-              className="font-mono text-[18px] font-black"
-              style={{ color: catColor }}
-            >
-              {ticker}
-            </span>
-            {category && (
-              <span
-                className="font-mono text-[9px] tracking-[2px] px-2 py-0.5 rounded-full border uppercase"
-                style={{ color: catColor, borderColor: catColor, background: `${catColor}18` }}
-              >
-                {category}
-              </span>
-            )}
-          </div>
-          <div className="flex items-center gap-4">
-            {price > 0 && (
-              <div className="text-right">
-                <div className="font-mono text-[16px] font-bold text-[var(--text-bright)]">
-                  ${price.toFixed(2)}
-                </div>
-                <div
-                  className="font-mono text-[11px]"
-                  style={{ color: up ? 'var(--accent)' : 'var(--accent3)' }}
-                >
-                  {up ? '▲' : '▼'} {Math.abs(change).toFixed(2)} ({Math.abs(changePct).toFixed(2)}%)
-                </div>
-              </div>
-            )}
-            <button onClick={onClose}>
-              <X size={16} className="text-[var(--text-dim)] hover:text-[var(--accent)] transition-colors" />
-            </button>
-          </div>
-        </div>
-
-        {/* Chart */}
-        {price > 0 && (
-          <div className="px-4 pt-4 pb-2">
-            <MiniChart price={price} change={change} height={140} />
-          </div>
-        )}
-
-        {/* Live indicator */}
-        <div className="flex items-center gap-2 px-5 pb-4 pt-1">
-          <div className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] animate-pulse" />
-          <span className="font-mono text-[9px] tracking-[2px] text-[var(--accent)] uppercase">
-            Live · Refreshes every 60s
-          </span>
-          <span className="font-mono text-[9px] text-[var(--text-dim)] ml-auto">
-            Click outside to close
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 // ── Main SearchableTerminal ──
 export default function SearchableTerminal() {
+  const router = useRouter();
   const [search, setSearch] = useState('');
-  const [modalTicker, setModalTicker] = useState<string | null>(null);
 
   const q = search.toUpperCase().trim();
 
@@ -200,8 +106,8 @@ export default function SearchableTerminal() {
   );
 
   const handleOpen = useCallback((ticker: string) => {
-    setModalTicker(ticker);
-  }, []);
+    router.push(`/contractor/${ticker}`);
+  }, [router]);
 
   const totalVisible = Object.values(filteredCategories).flat().length;
 
@@ -277,11 +183,6 @@ export default function SearchableTerminal() {
           </span>
         </div>
       </div>
-
-      {/* Modal */}
-      {modalTicker && (
-        <TickerModal ticker={modalTicker} onClose={() => setModalTicker(null)} />
-      )}
     </>
   );
 }
