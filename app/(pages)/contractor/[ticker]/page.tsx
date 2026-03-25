@@ -21,8 +21,26 @@ export default async function ContractorPage({ params }: { params: { ticker: str
   const stock = allStocks.find(s => s.ticker === ticker);
 
   // Filter signals relevant to this ticker
-  const relatedSignals = allSignals.filter(s => s.tickers.includes(ticker));
-  const relatedGeo = geoRisk.filter(g => g.impactTickers.includes(ticker));
+  // Sector-based signal filtering for broader coverage
+  const sectorMap: Record<string, string[]> = {
+    'DEFENCE': ['LMT','RTX','NOC','GD','BA','HII','LDOS','SAIC','BAH','DRS','KTOS','MRCY'],
+    'CYBER': ['CRWD','PANW','FTNT','ZS','NET','S','DDOG'],
+    'SEMIS': ['NVDA','AMD','AVGO','INTC','TSM','ASML','MRVL','KLAC','LRCX'],
+    'SPACE': ['RKLB','RDW','ASTS','MNTS','LUNR','SPR'],
+    'QUANTUM': ['IONQ','RGTI','QUBT','QBTS'],
+    'NUCLEAR': ['OKLO','SMR','CEG','VST','NNE','LEU','BWXT'],
+    'AI': ['PLTR','NVDA','AXON','DDOG'],
+  };
+  const sectorTickers = Object.values(sectorMap).find(arr => arr.includes(ticker)) || [];
+  const directSignals = allSignals.filter(s => s.tickers.includes(ticker));
+  const sectorSignals = allSignals.filter(s =>
+    s.tickers.some((t: string) => sectorTickers.includes(t)) && !directSignals.includes(s)
+  );
+  const relatedSignals = [...directSignals, ...sectorSignals].slice(0, 15);
+  const directGeo = geoRisk.filter(g => g.impactTickers?.includes(ticker));
+  const relatedGeo = directGeo.length > 0 ? geoRisk.filter(g => 
+    g.impactTickers?.some((t: string) => sectorTickers.includes(t))
+  ) : geoRisk.slice(0, 5);
 
   // If no contractor profile but stock exists, show basic stock intelligence
   if (!contractor && stock) {
