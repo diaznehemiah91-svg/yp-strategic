@@ -4,10 +4,12 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import SearchTerminal from './SearchTerminal'
+import AuthModal from './AuthModal'
 
 export default function NavBar() {
   const pathname = usePathname()
   const [searchOpen, setSearchOpen] = useState(false)
+  const [authOpen, setAuthOpen] = useState(false)
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -70,13 +72,17 @@ export default function NavBar() {
             <span className="hidden sm:inline">Search</span>
             <span className="opacity-50">⌘K</span>
           </button>
-          <button className="font-mono text-[10px] tracking-[1px] uppercase px-4 py-2 rounded border border-[var(--border)] bg-[var(--accent)] text-black font-semibold hover:bg-white transition-all cursor-pointer shadow-[0_0_20px_rgba(0,255,80,0.2)] hover:shadow-[0_0_30px_rgba(0,255,80,0.4)]">
+          <button
+            onClick={() => setAuthOpen(true)}
+            className="font-mono text-[10px] tracking-[1px] uppercase px-4 py-2 rounded border border-[var(--border)] bg-[var(--accent)] text-black font-semibold hover:bg-white transition-all cursor-pointer shadow-[0_0_20px_rgba(0,255,80,0.2)] hover:shadow-[0_0_30px_rgba(0,255,80,0.4)]"
+          >
             Sign In
           </button>
         </div>
       </nav>
 
       <SearchTerminal open={searchOpen} onClose={() => setSearchOpen(false)} />
+      <AuthModal isOpen={authOpen} onClose={() => setAuthOpen(false)} />
     </>
   )
 }
