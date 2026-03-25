@@ -1,7 +1,7 @@
 const tiers = [
   {
     tier: 'Free', amount: '$0', period: 'forever', featured: false,
-    feats: ['Signal feed (delayed)', 'Basic BridgePath maps', 'Public STRATINTEL briefs', 'Crypto & futures dashboard', 'Limited macro intel'],
+    feats: ['Signal feed (delayed)', 'Basic BridgePath maps', 'Public Strategic Research briefs', 'Crypto & futures dashboard', 'Limited macro intel'],
     cta: 'Get Started',
   },
   {

@@ -59,7 +59,7 @@ export default async function Home() {
               Initialize Feed →
             </a>
             <a href="#reports" className="bg-transparent text-[var(--text)] px-7 py-3 rounded-md border border-[var(--border)] text-sm cursor-pointer hover:border-[var(--accent)] hover:text-[var(--accent)] transition-all">
-              View STRATINTEL Report
+              View Strategic Research Report
             </a>
           </div>
         </div>
@@ -76,7 +76,7 @@ export default async function Home() {
             { icon: '🛡️', title: 'SIGNAL', desc: 'Real-time defence & deep-tech news wire. AI-curated. Zero noise. Pure signal.', href: '#signal' },
             { icon: '💡', title: 'BRIDGEPATH', desc: 'Public proxy maps for private defence & AI companies. How to invest before IPO.', href: '#bridgepath' },
             { icon: '📊', title: 'FORGE', desc: 'Browser-based indicator builder. Visual + code. AI-assisted Pine Script generation.', href: '#forge' },
-            { icon: '📋', title: 'REPORTS', desc: 'Weekly STRATINTEL briefings. Deep-dive sector reports. Earnings analysis.', href: '#reports' },
+            { icon: '📋', title: 'REPORTS', desc: 'Weekly ypstrategicresearch.com briefings. Deep-dive sector reports. Earnings analysis.', href: '#reports' },
             { icon: '🌐', title: 'NEXUS', desc: 'Interactive defence-tech ecosystem map. Contract awards. Funding → market flows.', href: '#nexus' },
             { icon: '🔐', title: 'INTEL VAULT', desc: 'Free → Pro ($29) → Institutional ($199). API access. Custom research.', href: '#pricing' },
           ].map((p) => (

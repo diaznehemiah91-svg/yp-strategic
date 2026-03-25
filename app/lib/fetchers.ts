@@ -1,12 +1,14 @@
 // ═══════════════════════════════════════════════════════════
-// Y.P STRATINTEL — Data Fetcher Service
+// ypstrategicresearch.com — Data Fetcher Service
 // Checks for API keys → uses live data OR falls back to mock
 // ═══════════════════════════════════════════════════════════
 
 import * as mock from './mock-data';
 
 const ALPHA_VANTAGE_KEY = process.env.ALPHA_VANTAGE_API_KEY;
-const NEWSAPI_KEY = process.env.NEWSAPI_KEY;
+// FINNHUB_KEY is consumed server-side by /api/stock-price and /api/company-news routes.
+// We read it here only to gate the live news fetch in fetchSignals.
+const FINNHUB_KEY = process.env.FINNHUB_KEY;
 const CMC_KEY = process.env.COINMARKETCAP_API_KEY;
 const FRED_KEY = process.env.FRED_API_KEY;
 
@@ -61,8 +63,10 @@ export async function fetchStocks(tickers?: string[]): Promise<mock.StockQuote[]
 }
 
 // ── NEWS / SIGNALS ──
+// News is fetched via Finnhub's company-news endpoint (uses FINNHUB_KEY).
+// Fall back to mock data when FINNHUB_KEY is absent or is the placeholder value.
 export async function fetchSignals(category?: string): Promise<mock.SignalItem[]> {
-  if (!NEWSAPI_KEY || NEWSAPI_KEY === 'your_key_here') {
+  if (!FINNHUB_KEY || FINNHUB_KEY === 'your_key_here') {
     const signals = mock.getMockSignals();
     return category ? signals.filter(s => s.category === category) : signals;
   }

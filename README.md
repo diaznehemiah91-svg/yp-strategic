@@ -1,4 +1,4 @@
-# Y.P STRATINTEL — Defence-Tech Intelligence Platform
+# ypstrategicresearch.com — Defence-Tech Intelligence Platform
 
 > **Where Capital Flows, Before The Market Knows**
 
@@ -17,7 +17,7 @@ yp-stratintel/
 │   ├── (pages)/          # Deep-link pages (contractor briefs, crypto, macro)
 │   ├── components/       # React components (Three.js bg, panels, grids, ads)
 │   ├── lib/              # Data fetchers + mock data layer
-│   ├── globals.css       # STRATINTEL aesthetic (glass panels, scanlines, noise)
+│   ├── globals.css       # ypstrategicresearch.com aesthetic (glass panels, scanlines, noise)
 │   ├── layout.tsx        # Root layout with AdSense
 │   └── page.tsx          # Homepage dashboard
 ├── prisma/               # PostgreSQL schema (stock cache, signals, subscribers, ad tracking)
@@ -34,8 +34,8 @@ yp-stratintel/
 ### 1. Clone & Install
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/yp-stratintel.git
-cd yp-stratintel
+git clone https://github.com/YOUR_USERNAME/yp-strategicresearch.git
+cd yp-strategicresearch
 npm install
 ```
 
@@ -154,7 +154,7 @@ railway up
 1. **SIGNAL** — Real-time news wire
 2. **BRIDGEPATH** — Private→public proxy mapping
 3. **FORGE** — Indicator builder (Pine Script, Python, MQL5)
-4. **REPORTS** — STRATINTEL briefings
+4. **REPORTS** — ypstrategicresearch.com briefings
 5. **NEXUS** — Ecosystem relationship map
 6. **INTEL VAULT** — Tiered access
 
@@ -167,7 +167,7 @@ This platform is operated by **Y.P Strategic Research (S-Corp)** and generates r
 1. **Display Advertising** — Google AdSense across all pages
 2. **Subscription Revenue** — Pro ($29/mo) and Institutional ($199/mo) tiers
 3. **API Access** — Data API for institutional clients
-4. **Custom Research** — On-demand STRATINTEL reports
+4. **Custom Research** — On-demand ypstrategicresearch.com reports
 
 Revenue metrics are tracked via the `/api/ads` endpoint and can be exported for tax filing, business loan applications, and financial reporting.
 

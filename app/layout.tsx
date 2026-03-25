@@ -2,19 +2,20 @@ import type { Metadata } from 'next';
 import './globals.css';
 import Script from 'next/script';
 
+// Branding: ypstrategicresearch.com (formerly Y.P STRATINTEL)
 export const metadata: Metadata = {
-  title: 'Y.P STRATINTEL | Defence-Tech Intelligence Platform',
+  title: 'ypstrategicresearch.com | Defence-Tech Intelligence Platform',
   description: 'Real-time defence & deep-tech intelligence. AI-curated signal. Public proxy mapping for private companies. Crypto, futures, macro intelligence.',
   keywords: 'defence tech, intelligence, Palantir, Lockheed Martin, RTX, crypto, Bitcoin, futures, NQ, ES, Federal Reserve, geopolitical risk',
   openGraph: {
-    title: 'Y.P STRATINTEL | Defence-Tech Intelligence Platform',
+    title: 'ypstrategicresearch.com | Defence-Tech Intelligence Platform',
     description: 'Where Capital Flows, Before The Market Knows',
     type: 'website',
-    siteName: 'Y.P STRATINTEL',
+    siteName: 'ypstrategicresearch.com',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Y.P STRATINTEL',
+    title: 'ypstrategicresearch.com',
     description: 'Defence-Tech Intelligence Platform',
   },
   robots: { index: true, follow: true },
