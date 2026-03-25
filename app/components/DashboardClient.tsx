@@ -1,7 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { X } from 'lucide-react';
+import useSWR from 'swr';
+import { getMockContractor } from '@/app/lib/mock-data';
+import MiniChart from './MiniChart';
+import SearchTerminal from './SearchTerminal';
 
 interface Stock {
   ticker: string;
@@ -25,13 +29,233 @@ interface Signal {
   timestamp: string;
 }
 
+const fetcher = (url: string) => fetch(url).then(r => r.json());
+
+const SEVERITY_COLOR: Record<string, string> = {
+  CRITICAL: 'bg-[rgba(255,51,85,0.15)] text-[var(--accent3)]',
+  ALERT: 'bg-[rgba(240,192,64,0.15)] text-[var(--gold)]',
+  INFO: 'bg-[rgba(0,212,255,0.12)] text-[var(--accent2)]',
+};
+
+const CAT_COLOR: Record<string, string> = {
+  DEFENCE: 'text-[var(--accent3)]',
+  CYBER: 'text-purple-400',
+  QUANTUM: 'text-[var(--accent2)]',
+  AI: 'text-blue-400',
+  NUCLEAR: 'text-[var(--gold)]',
+  GEOPOLITICAL: 'text-orange-400',
+  SPACE: 'text-violet-400',
+  FED: 'text-[var(--accent)]',
+};
+
+function computeSentiment(ticker: string, signals: Signal[]) {
+  const matching = signals.filter(s => s.tickers.includes(ticker));
+  if (!matching.length) return null;
+  const score = matching.reduce((acc, s) => {
+    if (s.severity === 'CRITICAL') return acc + 3;
+    if (s.severity === 'ALERT') return acc + 2;
+    return acc + 1;
+  }, 0);
+  return Math.min(100, Math.round((score / (matching.length * 3)) * 100 * 1.4));
+}
+
+function SentimentBar({ score }: { score: number }) {
+  const label = score >= 75 ? 'BULLISH' : score >= 45 ? 'NEUTRAL' : 'BEARISH';
+  const color = score >= 75 ? 'var(--accent)' : score >= 45 ? 'var(--gold)' : 'var(--accent3)';
+  const filled = Math.round(score / 10);
+  return (
+    <div className="space-y-1">
+      <div className="flex justify-between">
+        <span className="font-mono text-[9px] tracking-[2px] text-[var(--text-dim)]">SIGNAL SENTIMENT</span>
+        <span className="font-mono text-[9px]" style={{ color }}>{label} {score}/100</span>
+      </div>
+      <div className="flex gap-0.5">
+        {Array.from({ length: 10 }).map((_, i) => (
+          <div
+            key={i}
+            className="flex-1 h-1.5 rounded-sm"
+            style={{ background: i < filled ? color : 'var(--border)' }}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function TickerModal({
+  ticker,
+  stock,
+  signals,
+  onClose,
+}: {
+  ticker: string;
+  stock: Stock | null;
+  signals: Signal[];
+  onClose: () => void;
+}) {
+  const { data: live } = useSWR(
+    `/api/stock-price?symbol=${ticker}`,
+    fetcher,
+    { refreshInterval: 60000 }
+  );
+
+  const displayPrice = live?.price ?? stock?.price ?? 0;
+  const displayChange = live?.change ?? stock?.change ?? 0;
+  const displayChangePct = live?.changePercent ?? stock?.changePct ?? 0;
+  const isLive = !!live && !live.mock;
+  const isUp = displayChangePct >= 0;
+
+  const contractor = getMockContractor(ticker);
+  const relatedSignals = signals.filter(s => s.tickers.includes(ticker)).slice(0, 4);
+  const sentimentScore = computeSentiment(ticker, signals);
+  const latestContract = contractor?.recentContracts?.[0];
+
+  // Close on Escape
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-[90] flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" />
+
+      <div
+        className="glass relative w-full max-w-lg max-h-[90vh] overflow-y-auto"
+        style={{ border: '1px solid var(--border-bright)' }}
+        onClick={e => e.stopPropagation()}
+      >
+        {/* ── Header ── */}
+        <div
+          className="sticky top-0 z-10 flex items-center justify-between px-5 py-4 border-b border-[var(--border)]"
+          style={{ background: 'var(--surface)' }}
+        >
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-xl font-bold text-[var(--accent)] tracking-[2px]">
+                {ticker}
+              </span>
+              {contractor?.sector && (
+                <span className="font-mono text-[9px] tracking-[1.5px] px-2 py-0.5 rounded border border-[var(--border)] text-[var(--text-dim)]">
+                  {contractor.sector.toUpperCase()}
+                </span>
+              )}
+              {isLive && (
+                <span className="flex items-center gap-1 font-mono text-[9px] text-[var(--accent)] tracking-[1px]">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] animate-pulse" />
+                  LIVE
+                </span>
+              )}
+            </div>
+            <p className="font-mono text-[11px] text-[var(--text-dim)] mt-0.5">
+              {contractor?.name ?? stock?.name ?? ticker}
+            </p>
+          </div>
+          <button onClick={onClose} className="text-[var(--text-dim)] hover:text-[var(--accent)] transition-colors p-1">
+            <X size={18} />
+          </button>
+        </div>
+
+        <div className="p-5 space-y-5">
+          {/* ── Price ── */}
+          <div className="flex items-end gap-3">
+            <span className="font-mono text-3xl font-bold text-[var(--text-bright)]">
+              ${displayPrice.toFixed(2)}
+            </span>
+            <span className={`font-mono text-base font-semibold ${isUp ? 'text-[var(--accent)]' : 'text-[var(--accent3)]'}`}>
+              {isUp ? '▲' : '▼'} {isUp ? '+' : ''}{displayChange.toFixed(2)} ({isUp ? '+' : ''}{displayChangePct.toFixed(2)}%)
+            </span>
+            {stock?.marketCap && (
+              <span className="font-mono text-[10px] text-[var(--text-dim)] ml-auto">
+                MCap ${(stock.marketCap / 1e9).toFixed(1)}B
+              </span>
+            )}
+          </div>
+
+          {/* ── Chart ── */}
+          <div className="rounded overflow-hidden" style={{ border: '1px solid var(--border)' }}>
+            <div className="px-3 pt-2 pb-1">
+              <span className="font-mono text-[9px] tracking-[2px] text-[var(--text-dim)]">7-DAY PRICE</span>
+            </div>
+            <MiniChart price={displayPrice} change={displayChange} height={120} />
+          </div>
+
+          {/* ── Latest Contract ── */}
+          {latestContract && (
+            <div className="p-3 rounded space-y-1" style={{ background: 'var(--surface2)', border: '1px solid var(--border)' }}>
+              <span className="font-mono text-[9px] tracking-[2px] text-[var(--text-dim)]">LATEST CONTRACT</span>
+              <p className="font-mono text-[12px] text-[var(--text-bright)] leading-snug">{latestContract.title}</p>
+              <div className="flex gap-3 mt-1">
+                <span className="font-mono text-[11px] text-[var(--accent)] font-bold">{latestContract.value}</span>
+                <span className="font-mono text-[10px] text-[var(--text-dim)]">{latestContract.agency}</span>
+                <span className="font-mono text-[10px] text-[var(--text-dim)] ml-auto">{latestContract.date}</span>
+              </div>
+            </div>
+          )}
+
+          {/* ── Sentiment ── */}
+          {sentimentScore !== null && (
+            <div className="p-3 rounded" style={{ background: 'var(--surface2)', border: '1px solid var(--border)' }}>
+              <SentimentBar score={sentimentScore} />
+            </div>
+          )}
+
+          {/* ── BridgePath ── */}
+          {contractor && (
+            <div className="p-3 rounded space-y-2" style={{ background: 'var(--surface2)', border: '1px solid var(--border)' }}>
+              <span className="font-mono text-[9px] tracking-[2px] text-[var(--text-dim)]">BRIDGEPATH</span>
+              <p className="font-mono text-[11px] text-[var(--text)] leading-relaxed">{contractor.description}</p>
+              {contractor.relatedTickers.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mt-1">
+                  {contractor.relatedTickers.map(t => (
+                    <span key={t} className="font-mono text-[10px] px-2 py-0.5 rounded cursor-pointer hover:border-[var(--accent)] transition-colors"
+                      style={{ border: '1px solid var(--border)', color: 'var(--accent2)' }}>
+                      {t}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── Signals ── */}
+          {relatedSignals.length > 0 && (
+            <div className="space-y-2">
+              <span className="font-mono text-[9px] tracking-[2px] text-[var(--text-dim)]">RECENT SIGNALS</span>
+              {relatedSignals.map(s => (
+                <div key={s.id} className="p-3 rounded" style={{ background: 'var(--surface2)', border: '1px solid var(--border)' }}>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className={`font-mono text-[9px] tracking-[1px] ${CAT_COLOR[s.category] ?? 'text-[var(--text-dim)]'}`}>
+                      {s.category}
+                    </span>
+                    <span className={`font-mono text-[9px] px-1.5 py-0.5 rounded ${SEVERITY_COLOR[s.severity] ?? ''}`}>
+                      {s.severity}
+                    </span>
+                    <span className="font-mono text-[9px] text-[var(--text-dim)] ml-auto">{s.timestamp}</span>
+                  </div>
+                  <p className="font-mono text-[11px] text-[var(--text)] leading-snug">{s.title}</p>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* ── Footer ── */}
+          <p className="font-mono text-[9px] text-[var(--text-dim)] text-center tracking-[1px]">
+            DATA: {isLive ? 'FINNHUB (REAL-TIME)' : 'YP STRATEGIC RESEARCH (MOCK)'} · UPDATES EVERY 60S
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function DashboardClient({
   stocks,
   signals,
-  crypto,
-  futures,
-  fedUpdates,
-  geoRisk,
 }: {
   stocks: Stock[];
   signals: Signal[];
@@ -40,95 +264,104 @@ export default function DashboardClient({
   fedUpdates: any[];
   geoRisk: any[];
 }) {
-  const [selectedStock, setSelectedStock] = useState<Stock | null>(null);
+  const [modalTicker, setModalTicker] = useState<string | null>(null);
+  const [searchOpen, setSearchOpen] = useState(false);
 
-  // ── Column 1: CYBER & SPACE ──
+  const modalStock = modalTicker ? stocks.find(s => s.ticker === modalTicker) ?? null : null;
+
+  // ⌘K / Ctrl+K global shortcut
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setSearchOpen(v => !v);
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
+
+  const openModal = useCallback((ticker: string) => {
+    setModalTicker(ticker);
+    setSearchOpen(false);
+  }, []);
+
+  // ── Column groupings ──
   const cyberSpace = stocks.filter(s =>
     ['CRWD', 'PANW', 'FTNT', 'S', 'ZS', 'TENB', 'VRNS',
      'RKLB', 'KTOS', 'ASTS', 'LUNR', 'IRDM', 'PL'].includes(s.ticker)
   );
-
-  // ── Column 2: DEFENCE PRIMES (includes Defence IT) ──
   const defencePrimes = stocks.filter(s =>
     ['LMT', 'RTX', 'NOC', 'GD', 'BA', 'HII', 'LHX', 'TDG', 'TXT', 'HEI',
      'PLTR', 'LDOS', 'SAIC', 'CACI', 'BAH', 'PSN'].includes(s.ticker)
   );
-
-  // ── Column 3: SEMIS & TECH (Semis + Quantum + Nuclear/Energy) ──
   const semisAndTech = stocks.filter(s =>
     ['NVDA', 'AMD', 'INTC', 'QCOM', 'AVGO', 'MRVL', 'AMAT', 'TXN',
      'IONQ', 'RGTI', 'QUBT', 'QBTS', 'IBM',
      'OKLO', 'NNE', 'CEG', 'SMR', 'CCJ', 'UEC', 'BWXT', 'AXON'].includes(s.ticker)
   );
-
   const signalCards = signals.slice(0, 15);
 
   const StockCard = ({ stock }: { stock: Stock }) => {
-    const changePct = stock.changePct ?? stock.change;
-    const isPositive = changePct > 0;
-
+    const pct = stock.changePct ?? stock.change;
+    const up = pct >= 0;
     return (
       <div
-        onClick={() => setSelectedStock(stock)}
-        className="bg-gray-800/60 backdrop-blur-sm hover:bg-gray-700 border border-gray-700 hover:border-cyan-500 rounded-lg p-4 cursor-pointer transition-all duration-200 hover:shadow-lg hover:shadow-cyan-500/20"
+        onClick={() => openModal(stock.ticker)}
+        className="cursor-pointer rounded-lg p-3 transition-all duration-150"
+        style={{
+          background: 'var(--surface)',
+          border: '1px solid var(--border)',
+        }}
+        onMouseEnter={e => {
+          (e.currentTarget as HTMLDivElement).style.border = '1px solid var(--border-bright)';
+          (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-1px)';
+        }}
+        onMouseLeave={e => {
+          (e.currentTarget as HTMLDivElement).style.border = '1px solid var(--border)';
+          (e.currentTarget as HTMLDivElement).style.transform = '';
+        }}
       >
-        <div className="flex justify-between items-start mb-2">
+        <div className="flex justify-between items-start mb-1.5">
           <div>
-            <h3 className="font-bold text-lg text-white">{stock.ticker}</h3>
-            <p className="text-sm text-gray-400">{stock.name}</p>
+            <p className="font-mono text-[13px] font-bold text-[var(--accent)] tracking-[1px]">{stock.ticker}</p>
+            <p className="font-mono text-[10px] text-[var(--text-dim)] truncate max-w-[120px]">{stock.name}</p>
           </div>
-          <div className={`text-xs px-2 py-1 rounded ${isPositive ? 'bg-green-900/30 text-green-400' : 'bg-red-900/30 text-red-400'}`}>
-            {isPositive ? '+' : ''}{changePct?.toFixed(2)}%
-          </div>
-        </div>
-        <div className="flex justify-between items-center">
-          <span className="text-lg font-semibold text-white">${stock.price?.toFixed(2)}</span>
-          <span className={isPositive ? 'text-green-500 text-lg' : 'text-red-500 text-lg'}>
-            {isPositive ? '📈' : '📉'}
+          <span className={`font-mono text-[10px] px-1.5 py-0.5 rounded ${up ? 'bg-[rgba(0,255,82,0.1)] text-[var(--accent)]' : 'bg-[rgba(255,51,85,0.1)] text-[var(--accent3)]'}`}>
+            {up ? '+' : ''}{pct?.toFixed(2)}%
           </span>
         </div>
+        <div className="flex justify-between items-center">
+          <span className="font-mono text-[14px] font-semibold text-[var(--text-bright)]">${stock.price?.toFixed(2)}</span>
+          <span className={`text-sm ${up ? 'text-[var(--accent)]' : 'text-[var(--accent3)]'}`}>{up ? '▲' : '▼'}</span>
+        </div>
         {stock.sector && (
-          <p className="text-xs text-gray-500 mt-1 truncate">{stock.sector}</p>
+          <p className="font-mono text-[9px] text-[var(--text-dim)] mt-1 truncate tracking-[0.5px]">{stock.sector}</p>
         )}
       </div>
     );
   };
 
-  const SignalCard = ({ signal }: { signal: Signal }) => {
-    const categoryColors: Record<string, string> = {
-      DEFENCE: 'text-red-400',
-      CYBER: 'text-purple-400',
-      QUANTUM: 'text-cyan-400',
-      AI: 'text-blue-400',
-      NUCLEAR: 'text-yellow-400',
-      GEOPOLITICAL: 'text-orange-400',
-      FED: 'text-green-400',
-      CRYPTO: 'text-pink-400',
-      FUTURES: 'text-indigo-400',
-      SPACE: 'text-violet-400',
-    };
-
-    const severityBg: Record<string, string> = {
-      CRITICAL: 'bg-red-900/30 text-red-400',
-      ALERT: 'bg-orange-900/30 text-orange-400',
-      INFO: 'bg-blue-900/30 text-blue-400',
-    };
-
-    return (
-      <div className="bg-gray-800/60 hover:bg-gray-700 border border-gray-700 hover:border-cyan-500 rounded-lg p-3 transition-all cursor-pointer">
-        <div className="flex justify-between items-start mb-2">
-          <p className={`text-xs font-semibold ${categoryColors[signal.category] || 'text-gray-400'}`}>
-            {signal.category}
-          </p>
-          <span className={`text-xs px-2 py-1 rounded ${severityBg[signal.severity] || 'bg-gray-700 text-gray-300'}`}>
-            {signal.severity}
-          </span>
-        </div>
-        <h4 className="text-sm font-semibold text-white line-clamp-2">{signal.title}</h4>
-        <p className="text-xs text-gray-400 mt-1">{signal.source} • {signal.timestamp}</p>
+  const SignalCard = ({ signal }: { signal: Signal }) => (
+    <div
+      className="rounded-lg p-3 transition-all cursor-pointer"
+      style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
+      onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.border = '1px solid var(--border-bright)'}
+      onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.border = '1px solid var(--border)'}
+      onClick={() => signal.tickers[0] && openModal(signal.tickers[0])}
+    >
+      <div className="flex justify-between items-start mb-1.5">
+        <p className={`font-mono text-[9px] tracking-[1px] font-semibold ${CAT_COLOR[signal.category] ?? 'text-[var(--text-dim)]'}`}>
+          {signal.category}
+        </p>
+        <span className={`font-mono text-[9px] px-1.5 py-0.5 rounded ${SEVERITY_COLOR[signal.severity] ?? ''}`}>
+          {signal.severity}
+        </span>
       </div>
-    );
-  };
+      <p className="font-mono text-[11px] text-[var(--text)] leading-snug line-clamp-2">{signal.title}</p>
+      <p className="font-mono text-[9px] text-[var(--text-dim)] mt-1">{signal.source} · {signal.timestamp}</p>
+    </div>
+  );
 
   const Column = ({
     title,
@@ -142,191 +375,90 @@ export default function DashboardClient({
     items: any[];
     isSignal: boolean;
     badge?: string;
-  }) => {
-    return (
-      <div className="space-y-4">
-        <div className="pb-4 border-b border-gray-700">
-          <div className="flex items-center gap-2 mb-1">
-            <h2 className="text-xl font-bold text-white">{title}</h2>
-            {badge && (
-              <span className="text-xs px-2 py-0.5 bg-cyan-900/40 text-cyan-400 rounded border border-cyan-700/40">
-                {badge}
-              </span>
-            )}
-          </div>
-          <p className="text-xs text-cyan-400">{subtitle}</p>
-        </div>
-        <div className="space-y-3">
-          {items.map(item =>
-            isSignal ? (
-              <SignalCard key={item.id} signal={item} />
-            ) : (
-              <StockCard key={item.ticker} stock={item} />
-            )
+  }) => (
+    <div className="space-y-3">
+      <div className="pb-3 border-b border-[var(--border)]">
+        <div className="flex items-center gap-2 mb-0.5">
+          <h2 className="font-mono text-[13px] font-bold text-[var(--text-bright)] tracking-[2px] uppercase">{title}</h2>
+          {badge && (
+            <span className="font-mono text-[9px] px-1.5 py-0.5 rounded border border-[var(--border)] text-[var(--accent2)]">
+              {badge}
+            </span>
           )}
         </div>
+        <p className="font-mono text-[10px] text-[var(--accent)] tracking-[0.5px]">{subtitle}</p>
       </div>
-    );
-  };
-
-  const StockModalComponent = () => {
-    if (!selectedStock) return null;
-
-    const changePct = selectedStock.changePct ?? selectedStock.change;
-    const isPositive = changePct > 0;
-    const relatedSignals = signals.filter(s => s.tickers.includes(selectedStock.ticker)).slice(0, 3);
-
-    return (
-      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div className="bg-gray-800/90 backdrop-blur-md rounded-lg border border-gray-700 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-          {/* Header */}
-          <div className="sticky top-0 bg-gray-800/90 flex justify-between items-center p-6 border-b border-gray-700">
-            <div>
-              <h2 className="text-2xl font-bold text-white">{selectedStock.ticker}</h2>
-              <p className="text-gray-400">{selectedStock.name}</p>
-            </div>
-            <button
-              onClick={() => setSelectedStock(null)}
-              className="text-gray-400 hover:text-white transition-colors"
-            >
-              <X size={24} />
-            </button>
-          </div>
-
-          <div className="p-6 space-y-6">
-            {/* Price Section */}
-            <div className="bg-gray-700/30 rounded-lg p-4">
-              <p className="text-gray-400 text-sm mb-2">Current Price</p>
-              <div className="flex items-baseline gap-2">
-                <span className="text-4xl font-bold text-white">${selectedStock.price?.toFixed(2)}</span>
-                <span className={`text-xl ${isPositive ? 'text-green-400' : 'text-red-400'}`}>
-                  {isPositive ? '+' : ''}
-                  {changePct?.toFixed(2)}%
-                </span>
-              </div>
-              {selectedStock.marketCap && (
-                <p className="text-sm text-gray-400 mt-2">
-                  Market Cap: ${(selectedStock.marketCap / 1e9).toFixed(1)}B
-                </p>
-              )}
-            </div>
-
-            {/* Sector */}
-            {selectedStock.sector && (
-              <div className="bg-gray-700/30 rounded-lg p-4">
-                <p className="text-gray-400 text-sm mb-2">Sector</p>
-                <p className="text-white font-semibold">{selectedStock.sector}</p>
-              </div>
-            )}
-
-            {/* Technical Chart Placeholder */}
-            <div className="bg-gray-700/30 rounded-lg p-4">
-              <p className="text-gray-400 text-sm mb-3">Technical Chart</p>
-              <div className="bg-gray-900 rounded h-64 flex items-center justify-center border border-gray-600">
-                <p className="text-gray-500">📈 TradingView Chart Embedded Here</p>
-              </div>
-            </div>
-
-            {/* Related News / Signals */}
-            {relatedSignals.length > 0 && (
-              <div className="bg-gray-700/30 rounded-lg p-4">
-                <p className="text-gray-400 text-sm mb-3">Latest News & Signals</p>
-                <div className="space-y-2">
-                  {relatedSignals.map(signal => (
-                    <div
-                      key={signal.id}
-                      className="bg-gray-800 p-3 rounded border border-gray-600 hover:border-cyan-500 cursor-pointer transition-colors"
-                    >
-                      <div className="flex justify-between items-start mb-1">
-                        <p className="text-sm text-cyan-400 font-semibold">{signal.source}</p>
-                        <span className="text-xs px-2 py-1 rounded bg-blue-900/30 text-blue-400">
-                          {signal.category}
-                        </span>
-                      </div>
-                      <p className="text-white text-sm">{signal.title}</p>
-                      <p className="text-xs text-gray-400 mt-1">{signal.timestamp}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* SMS Alert Setup */}
-            <div className="bg-gradient-to-r from-cyan-900/20 to-blue-900/20 rounded-lg p-4 border border-cyan-700/30">
-              <p className="text-gray-300 font-semibold mb-2">🔔 Set SMS Alert for {selectedStock.ticker}</p>
-              <p className="text-sm text-gray-400 mb-3">Monitor key levels and signals for this stock</p>
-              <input
-                type="text"
-                placeholder="Enter phone number"
-                className="w-full bg-gray-800 border border-gray-600 rounded px-3 py-2 text-white text-sm placeholder-gray-500 mb-2"
-              />
-              <button className="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-semibold py-2 rounded transition-colors">
-                Enable SMS Alerts
-              </button>
-            </div>
-          </div>
-        </div>
+      <div className="space-y-2">
+        {items.map(item =>
+          isSignal
+            ? <SignalCard key={item.id} signal={item} />
+            : <StockCard key={item.ticker} stock={item} />
+        )}
       </div>
-    );
-  };
+    </div>
+  );
 
   return (
     <>
-      <nav className="sticky top-0 z-40 bg-gray-900/60 backdrop-blur-md border-b border-gray-800">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="mb-4 flex items-center gap-2">
-            <span className="text-2xl font-bold text-cyan-400">ypstrategicresearch.com</span>
-            <span className="text-xs text-gray-500 px-2 py-1 bg-gray-800 rounded">RESEARCH</span>
-          </div>
-          <div className="flex gap-6 text-sm font-semibold">
-            <button className="text-cyan-400 border-b-2 border-cyan-400 pb-2">STOCKS</button>
-            <button className="text-gray-400 hover:text-white pb-2">SCREENERS</button>
-            <button className="text-gray-400 hover:text-white pb-2">FUTURES</button>
-            <button className="text-gray-400 hover:text-white pb-2">CRYPTO</button>
-            <button className="text-gray-400 hover:text-white pb-2">NEWS</button>
-          </div>
+      {/* ── Internal nav bar ── */}
+      <div
+        className="sticky top-0 z-40 flex items-center justify-between px-5 py-3 mb-4 backdrop-blur-md"
+        style={{ background: 'rgba(2,3,4,0.85)', borderBottom: '1px solid var(--border)' }}
+      >
+        <div className="flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-[var(--accent)] animate-pulse shadow-[0_0_8px_var(--accent)]" />
+          <span className="font-mono text-[11px] font-bold text-[var(--accent)] tracking-[2px]">
+            ypstrategicresearch.com
+          </span>
+          <span className="font-mono text-[9px] px-2 py-0.5 rounded border border-[var(--border)] text-[var(--text-dim)] tracking-[1px]">
+            RESEARCH
+          </span>
         </div>
-      </nav>
 
-      <div className="max-w-7xl mx-auto px-6 py-8 relative z-10">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Column
-            title="CYBER & SPACE"
-            subtitle="Cybersecurity · Space · Launch"
-            items={cyberSpace}
-            isSignal={false}
-            badge={`${cyberSpace.length}`}
-          />
-          <Column
-            title="DEFENCE PRIMES"
-            subtitle="Primes · Defence IT · Services"
-            items={defencePrimes}
-            isSignal={false}
-            badge={`${defencePrimes.length}`}
-          />
-          <Column
-            title="SEMIS & TECH"
-            subtitle="Semiconductors · Quantum · Nuclear"
-            items={semisAndTech}
-            isSignal={false}
-            badge={`${semisAndTech.length}`}
-          />
-          <Column
-            title="NEWS & SIGNALS"
-            subtitle="Intelligence · Alerts · Events"
-            items={signalCards}
-            isSignal={true}
-            badge={`${signalCards.length}`}
-          />
+        <div className="hidden md:flex items-center gap-5">
+          {['STOCKS', 'SCREENERS', 'FUTURES', 'CRYPTO', 'NEWS'].map(tab => (
+            <button key={tab} className="font-mono text-[10px] tracking-[1.5px] text-[var(--text-dim)] hover:text-[var(--accent)] transition-colors">
+              {tab}
+            </button>
+          ))}
+        </div>
+
+        <button
+          onClick={() => setSearchOpen(true)}
+          className="flex items-center gap-2 font-mono text-[10px] tracking-[1px] text-[var(--text-dim)] hover:text-[var(--accent)] transition-colors px-3 py-1.5 rounded"
+          style={{ border: '1px solid var(--border)' }}
+        >
+          <span>⌘K</span>
+          <span className="hidden sm:inline">SEARCH</span>
+        </button>
+      </div>
+
+      {/* ── Grid ── */}
+      <div className="max-w-7xl mx-auto px-4 pb-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+          <Column title="CYBER & SPACE" subtitle="Cybersecurity · Space · Launch" items={cyberSpace} isSignal={false} badge={`${cyberSpace.length}`} />
+          <Column title="DEFENCE PRIMES" subtitle="Primes · Defence IT · Services" items={defencePrimes} isSignal={false} badge={`${defencePrimes.length}`} />
+          <Column title="SEMIS & TECH" subtitle="Semiconductors · Quantum · Nuclear" items={semisAndTech} isSignal={false} badge={`${semisAndTech.length}`} />
+          <Column title="NEWS & SIGNALS" subtitle="Intelligence · Alerts · Events" items={signalCards} isSignal={true} badge={`${signalCards.length}`} />
         </div>
       </div>
 
-      <StockModalComponent />
+      {/* ── Search Terminal ── */}
+      <SearchTerminal
+        open={searchOpen}
+        onClose={() => setSearchOpen(false)}
+        onSelect={openModal}
+      />
 
-      <div className="fixed bottom-6 left-6 bg-gray-800 border border-cyan-500 rounded-lg p-4 max-w-sm text-sm z-30">
-        <p className="text-cyan-400 font-semibold">✨ YP Strategic Research</p>
-        <p className="text-gray-300 text-xs mt-1">50 Tickers · 7 Sectors · 4-Column Dashboard</p>
-      </div>
+      {/* ── Ticker Modal ── */}
+      {modalTicker && (
+        <TickerModal
+          ticker={modalTicker}
+          stock={modalStock}
+          signals={signals}
+          onClose={() => setModalTicker(null)}
+        />
+      )}
     </>
   );
 }

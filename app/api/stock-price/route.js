@@ -1,4 +1,5 @@
 import { getMockStocks } from '@/app/lib/mock-data';
+import { getCachedStockPrice } from '@/app/lib/cache';
 
 function mockQuoteForSymbol(symbol) {
   const stocks = getMockStocks();
@@ -23,47 +24,16 @@ export async function GET(request) {
     return Response.json({ error: 'Symbol required' }, { status: 400 });
   }
 
-  const FINNHUB_KEY = process.env.FINNHUB_KEY;
-
-  if (!FINNHUB_KEY) {
-    console.warn('[API] FINNHUB_KEY not set — returning mock quote for', symbol);
+  try {
+    const cached = await getCachedStockPrice(symbol);
+    if (cached) {
+      return Response.json(cached, {
+        headers: { 'Cache-Control': 'public, max-age=60, stale-while-revalidate=120' },
+      });
+    }
     return Response.json(mockQuoteForSymbol(symbol), {
       headers: { 'Cache-Control': 'public, max-age=60' },
     });
-  }
-
-  try {
-    const url = `https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${FINNHUB_KEY}`;
-    const res = await fetch(url);
-
-    if (!res.ok) {
-      console.warn(`[API] Finnhub returned ${res.status} for ${symbol} — falling back to mock`);
-      return Response.json(mockQuoteForSymbol(symbol), {
-        headers: { 'Cache-Control': 'public, max-age=60' },
-      });
-    }
-
-    const data = await res.json();
-
-    if (data.c === undefined || data.c === null) {
-      console.warn(`[API] No price data from Finnhub for ${symbol} — falling back to mock`);
-      return Response.json(mockQuoteForSymbol(symbol), {
-        headers: { 'Cache-Control': 'public, max-age=60' },
-      });
-    }
-
-    return Response.json(
-      {
-        price: data.c,
-        change: data.d,
-        changePercent: data.dp,
-        high: data.h,
-        low: data.l,
-        previousClose: data.pc,
-        timestamp: data.t,
-      },
-      { headers: { 'Cache-Control': 'public, max-age=60' } }
-    );
   } catch (error) {
     console.error('[API] Error fetching stock price — falling back to mock:', error);
     return Response.json(mockQuoteForSymbol(symbol), {
