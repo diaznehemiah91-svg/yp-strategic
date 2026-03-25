@@ -1,3 +1,21 @@
+import { getMockSignals } from '@/app/lib/mock-data';
+
+function mockNewsForSymbol(symbol) {
+  const signals = getMockSignals();
+  const ticker = symbol.toUpperCase();
+  const matched = signals.filter(s => s.tickers.includes(ticker));
+  const items = (matched.length ? matched : signals).slice(0, 5);
+  return items.map(s => ({
+    headline: s.title,
+    summary: s.summary,
+    source: s.source,
+    url: s.url,
+    datetime: Math.floor(new Date(s.publishedAt).getTime() / 1000),
+    image: '',
+    mock: true,
+  }));
+}
+
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const symbol = searchParams.get('symbol');
@@ -6,25 +24,27 @@ export async function GET(request) {
     return Response.json({ error: 'Symbol required' }, { status: 400 });
   }
 
+  const FINNHUB_KEY = process.env.FINNHUB_KEY;
+
+  if (!FINNHUB_KEY) {
+    console.warn('[API] FINNHUB_KEY not set — returning mock news for', symbol);
+    return Response.json(mockNewsForSymbol(symbol), {
+      headers: { 'Cache-Control': 'public, max-age=300' },
+    });
+  }
+
   try {
-    const FINNHUB_KEY = process.env.FINNHUB_KEY;
-
-    // Guard: return 500 if FINNHUB_KEY is missing (mirrors stock-price/route.js pattern)
-    if (!FINNHUB_KEY) {
-      console.warn('[API] FINNHUB_KEY not found in environment variables');
-      return Response.json({ error: 'API key not configured' }, { status: 500 });
-    }
-
     const today = new Date().toISOString().split('T')[0];
     const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0];
 
     const res = await fetch(
       `https://finnhub.io/api/v1/company-news?symbol=${symbol}&from=${weekAgo}&to=${today}&token=${FINNHUB_KEY}`
     );
-
     if (!res.ok) {
-      console.warn(`[API] Finnhub company-news returned status ${res.status} for ${symbol}`);
-      return Response.json({ error: `Finnhub API error: ${res.status}` }, { status: 500 });
+      console.warn(`[API] Finnhub returned ${res.status} for ${symbol} news — falling back to mock`);
+      return Response.json(mockNewsForSymbol(symbol), {
+        headers: { 'Cache-Control': 'public, max-age=300' },
+      });
     }
     const articles = await res.json();
 
@@ -38,11 +58,12 @@ export async function GET(request) {
     }));
 
     return Response.json(filtered, {
-      headers: {
-        'Cache-Control': 'public, max-age=300',
-      },
+      headers: { 'Cache-Control': 'public, max-age=300' },
     });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('[API] Error fetching company news — falling back to mock:', error);
+    return Response.json(mockNewsForSymbol(symbol), {
+      headers: { 'Cache-Control': 'public, max-age=300' },
+    });
   }
 }
