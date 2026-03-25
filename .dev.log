@@ -1,0 +1,13 @@
+
+> yp-strategicresearch@2.0.0 dev
+> next dev
+
+ ⚠ Port 3000 is in use, trying 3001 instead.
+ ⚠ Port 3001 is in use, trying 3002 instead.
+   ▲ Next.js 14.1.0
+   - Local:        http://localhost:3002
+   - Environments: .env.local
+
+ ✓ Ready in 2.1s
+ ✓ Compiled /api/news in 417ms (38 modules)
+ ✓ Compiled in 1379ms (190 modules)
