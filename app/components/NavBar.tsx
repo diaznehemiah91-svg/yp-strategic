@@ -25,8 +25,8 @@ export default function NavBar() {
   const navItems = [
     { label: 'Signal Wire', href: '/signal', icon: '📡' },
     { label: 'Nexus Map', href: '/nexus', icon: '🗺' },
-    { label: 'Digital Assets', href: '/crypto', icon: '💰' },
     { label: 'Tech Levels', href: '/levels', icon: '📊' },
+    { label: 'Assets', href: '/assets', icon: '⚡' },
     { label: 'Forge IDE', href: '/forge', icon: '⚙️', highlight: true },
   ]
 
