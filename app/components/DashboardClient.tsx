@@ -42,21 +42,26 @@ export default function DashboardClient({
 }) {
   const [selectedStock, setSelectedStock] = useState<Stock | null>(null);
 
-  // Categorize stocks into 4 columns
-  const techQuantum = stocks.filter(s =>
-    ['NVDA', 'IONQ', 'PLTR', 'CRWD', 'AXON', 'OKLO', 'RKLB'].includes(s.ticker)
-  ).slice(0, 10);
+  // ── Column 1: CYBER & SPACE ──
+  const cyberSpace = stocks.filter(s =>
+    ['CRWD', 'PANW', 'FTNT', 'S', 'ZS', 'TENB', 'VRNS',
+     'RKLB', 'KTOS', 'ASTS', 'LUNR', 'IRDM', 'PL'].includes(s.ticker)
+  );
 
-  const dividendStocks = stocks.filter(s =>
-    ['LMT', 'RTX', 'NOC', 'GD', 'BA', 'LDOS', 'HII'].includes(s.ticker)
-  ).slice(0, 10);
+  // ── Column 2: DEFENCE PRIMES (includes Defence IT) ──
+  const defencePrimes = stocks.filter(s =>
+    ['LMT', 'RTX', 'NOC', 'GD', 'BA', 'HII', 'LHX', 'TDG', 'TXT', 'HEI',
+     'PLTR', 'LDOS', 'SAIC', 'CACI', 'BAH', 'PSN'].includes(s.ticker)
+  );
 
-  const hotStocks = stocks.filter(s =>
-    !techQuantum.find(t => t.ticker === s.ticker) &&
-    !dividendStocks.find(t => t.ticker === s.ticker)
-  ).slice(0, 10);
+  // ── Column 3: SEMIS & TECH (Semis + Quantum + Nuclear/Energy) ──
+  const semisAndTech = stocks.filter(s =>
+    ['NVDA', 'AMD', 'INTC', 'QCOM', 'AVGO', 'MRVL', 'AMAT', 'TXN',
+     'IONQ', 'RGTI', 'QUBT', 'QBTS', 'IBM',
+     'OKLO', 'NNE', 'CEG', 'SMR', 'CCJ', 'UEC', 'BWXT', 'AXON'].includes(s.ticker)
+  );
 
-  const signalCards = signals.slice(0, 10);
+  const signalCards = signals.slice(0, 15);
 
   const StockCard = ({ stock }: { stock: Stock }) => {
     const changePct = stock.changePct ?? stock.change;
@@ -82,6 +87,9 @@ export default function DashboardClient({
             {isPositive ? '📈' : '📉'}
           </span>
         </div>
+        {stock.sector && (
+          <p className="text-xs text-gray-500 mt-1 truncate">{stock.sector}</p>
+        )}
       </div>
     );
   };
@@ -97,6 +105,7 @@ export default function DashboardClient({
       FED: 'text-green-400',
       CRYPTO: 'text-pink-400',
       FUTURES: 'text-indigo-400',
+      SPACE: 'text-violet-400',
     };
 
     const severityBg: Record<string, string> = {
@@ -126,16 +135,25 @@ export default function DashboardClient({
     subtitle,
     items,
     isSignal,
+    badge,
   }: {
     title: string;
     subtitle: string;
     items: any[];
     isSignal: boolean;
+    badge?: string;
   }) => {
     return (
       <div className="space-y-4">
-        <div className="pb-4">
-          <h2 className="text-xl font-bold text-white">{title}</h2>
+        <div className="pb-4 border-b border-gray-700">
+          <div className="flex items-center gap-2 mb-1">
+            <h2 className="text-xl font-bold text-white">{title}</h2>
+            {badge && (
+              <span className="text-xs px-2 py-0.5 bg-cyan-900/40 text-cyan-400 rounded border border-cyan-700/40">
+                {badge}
+              </span>
+            )}
+          </div>
           <p className="text-xs text-cyan-400">{subtitle}</p>
         </div>
         <div className="space-y-3">
@@ -272,10 +290,34 @@ export default function DashboardClient({
 
       <div className="max-w-7xl mx-auto px-6 py-8 relative z-10">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Column title="TECH & QUANTUM" subtitle="Nexus" items={techQuantum} isSignal={false} />
-          <Column title="DIVIDEND STOCKS" subtitle="Bridgepath" items={dividendStocks} isSignal={false} />
-          <Column title="HOT STOCKS" subtitle="Forge" items={hotStocks} isSignal={false} />
-          <Column title="NEWS & SIGNALS" subtitle="Signal" items={signalCards} isSignal={true} />
+          <Column
+            title="CYBER & SPACE"
+            subtitle="Cybersecurity · Space · Launch"
+            items={cyberSpace}
+            isSignal={false}
+            badge={`${cyberSpace.length}`}
+          />
+          <Column
+            title="DEFENCE PRIMES"
+            subtitle="Primes · Defence IT · Services"
+            items={defencePrimes}
+            isSignal={false}
+            badge={`${defencePrimes.length}`}
+          />
+          <Column
+            title="SEMIS & TECH"
+            subtitle="Semiconductors · Quantum · Nuclear"
+            items={semisAndTech}
+            isSignal={false}
+            badge={`${semisAndTech.length}`}
+          />
+          <Column
+            title="NEWS & SIGNALS"
+            subtitle="Intelligence · Alerts · Events"
+            items={signalCards}
+            isSignal={true}
+            badge={`${signalCards.length}`}
+          />
         </div>
       </div>
 
@@ -283,7 +325,7 @@ export default function DashboardClient({
 
       <div className="fixed bottom-6 left-6 bg-gray-800 border border-cyan-500 rounded-lg p-4 max-w-sm text-sm z-30">
         <p className="text-cyan-400 font-semibold">✨ YP Strategic Research</p>
-        <p className="text-gray-300 text-xs mt-1">4-Column Intelligence Dashboard</p>
+        <p className="text-gray-300 text-xs mt-1">50 Tickers · 7 Sectors · 4-Column Dashboard</p>
       </div>
     </>
   );
