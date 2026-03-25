@@ -202,10 +202,10 @@ export default function StockDetailClient({
             <h3 className="font-mono text-xs text-[var(--accent)] tracking-[2px] mb-4">◆ PRICE CHART</h3>
             <div className="bg-[rgba(0,255,80,0.02)] rounded border border-[rgba(0,255,80,0.1)] h-[500px] overflow-hidden">
               <iframe
-                src={`https://s.tradingview.com/widgetembed/?frameElementId=tradingview_widget&symbol=${ticker}&interval=D&hidesidetoolbar=0&symboledit=1&saveimage=1&toolbarbg=f1f3f6&theme=dark&style=1&timezone=America%2FNew_York&withdateranges=1&showpopupbutton=1&locale=en`}
+                src={`https://s.tradingview.com/widgetembed/?frameElementId=tradingview_widget&symbol=${stock.ticker}&interval=D&hidesidetoolbar=0&symboledit=1&saveimage=1&toolbarbg=f1f3f6&theme=dark&style=1&timezone=America%2FNew_York&withdateranges=1&showpopupbutton=1&locale=en`}
                 style={{width: "100%", height: "100%", border: "none"}}
                 allowFullScreen
-                title={`${ticker} TradingView Chart`}
+                title={`${stock.ticker} TradingView Chart`}
               />
             </div>
           </div>

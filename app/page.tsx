@@ -9,6 +9,7 @@ import FuturesPanel from './components/FuturesPanel';
 import MacroPanel from './components/MacroPanel';
 import GeoRiskPanel from './components/GeoRiskPanel';
 import ContractorGrid from './components/ContractorGrid';
+import SearchableTerminal from './components/SearchableTerminal';
 import ForgeSection from './components/ForgeSection';
 import NexusSection from './components/NexusSection';
 import PricingSection from './components/PricingSection';
@@ -93,6 +94,12 @@ export default async function Home() {
           <span className="w-6 h-px bg-[var(--accent)]" />◆ Defence Contractors
         </div>
         <ContractorGrid stocks={stocks} />
+
+        {/* ── SECTOR WATCHLIST ── */}
+        <div className="font-mono text-[10px] tracking-[3px] uppercase text-[var(--accent)] mb-4 flex items-center gap-2 fade-up d4">
+          <span className="w-6 h-px bg-[var(--accent)]" />◆ Sector Watchlist
+        </div>
+        <SearchableTerminal />
 
         {/* ── SIGNAL + BRIDGEPATH ── */}
         <div id="signal" className="font-mono text-[10px] tracking-[3px] uppercase text-[var(--accent)] mb-4 flex items-center gap-2 fade-up d5">

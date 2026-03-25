@@ -147,6 +147,20 @@ export function getMockStocks(): StockQuote[] {
     { ticker: 'UEC', name: 'Uranium Energy Corp', price: 8.42, change: 0.28, changePct: 3.44, volume: 6840000, marketCap: 3480000000, sector: 'Nuclear / Energy' },
     { ticker: 'BWXT', name: 'BWX Technologies', price: 98.42, change: -0.84, changePct: -0.85, volume: 924000, marketCap: 8640000000, sector: 'Nuclear / Energy' },
     { ticker: 'AXON', name: 'Axon Enterprise', price: 298.67, change: 5.53, changePct: 1.89, volume: 1340000, marketCap: 22100000000, sector: 'Nuclear / Energy' },
+    { ticker: 'GEV', name: 'GE Vernova', price: 338.45, change: 4.12, changePct: 1.23, volume: 2180000, marketCap: 92400000000, sector: 'Nuclear / Energy' },
+
+    // ── ROBOTICS (4) ──
+    { ticker: 'SYM', name: 'Symbotic Inc', price: 21.84, change: -0.44, changePct: -1.97, volume: 4820000, marketCap: 14800000000, sector: 'Robotics' },
+    { ticker: 'SERV', name: 'Serve Robotics', price: 9.42, change: 0.38, changePct: 4.20, volume: 8420000, marketCap: 620000000, sector: 'Robotics' },
+    { ticker: 'TER', name: 'Teradyne Inc', price: 93.18, change: -1.24, changePct: -1.31, volume: 2840000, marketCap: 15200000000, sector: 'Robotics' },
+    { ticker: 'ISRG', name: 'Intuitive Surgical', price: 518.92, change: 6.84, changePct: 1.34, volume: 1240000, marketCap: 184200000000, sector: 'Robotics' },
+
+    // ── AI DATA CENTERS (2) ──
+    { ticker: 'ANET', name: 'Arista Networks', price: 378.44, change: 5.22, changePct: 1.40, volume: 1840000, marketCap: 119800000000, sector: 'AI / Data Centers' },
+    { ticker: 'NBIS', name: 'Nebius Group', price: 34.82, change: 1.18, changePct: 3.51, volume: 6420000, marketCap: 6840000000, sector: 'AI / Data Centers' },
+
+    // ── DEFENSE TECH (1) ──
+    { ticker: 'AVAV', name: 'AeroVironment Inc', price: 182.40, change: -2.18, changePct: -1.18, volume: 424000, marketCap: 7240000000, sector: 'Defence Primes' },
   ];
 }
 

@@ -1,5 +1,7 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { Search } from 'lucide-react';
+import SearchTerminal from './SearchTerminal';
 
 const navItems = [
   { label: 'Signal', href: '#signal' },
@@ -12,8 +14,21 @@ const navItems = [
 
 export default function NavBar() {
   const [active, setActive] = useState('Signal');
+  const [searchOpen, setSearchOpen] = useState(false);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setSearchOpen(v => !v);
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
 
   return (
+    <>
     <nav className="glass flex items-center justify-between px-5 py-3 mb-6 fade-up d1">
       <div className="font-mono font-bold text-sm text-[var(--accent)] tracking-[3px] flex items-center gap-2.5">
         <div className="w-2.5 h-2.5 bg-[var(--accent)] rounded-full animate-pulse shadow-[0_0_12px_var(--accent)]" />
@@ -37,6 +52,14 @@ export default function NavBar() {
         ))}
       </div>
       <div className="flex gap-2">
+        <button
+          onClick={() => setSearchOpen(true)}
+          className="flex items-center gap-2 font-mono text-[10px] tracking-[1px] uppercase px-3 py-2 rounded border border-[var(--border)] bg-transparent text-[var(--text-dim)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-all cursor-pointer"
+        >
+          <Search size={11} />
+          <span className="hidden sm:inline">Search</span>
+          <span className="opacity-40">⌘K</span>
+        </button>
         <button className="font-mono text-[10px] tracking-[1.5px] uppercase px-4 py-2 rounded border border-[var(--border)] bg-transparent text-[var(--text-dim)] cursor-pointer hover:border-[var(--accent)] hover:text-[var(--accent)] transition-all">
           Terminal Login
         </button>
@@ -45,5 +68,12 @@ export default function NavBar() {
         </button>
       </div>
     </nav>
+
+    <SearchTerminal
+      open={searchOpen}
+      onClose={() => setSearchOpen(false)}
+      onSelect={() => setSearchOpen(false)}
+    />
+    </>
   );
 }
