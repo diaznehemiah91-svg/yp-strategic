@@ -139,3 +139,79 @@ model PageView {
 
   @@index([path, timestamp])
 }
+
+// ── AI AGENT ANALYSIS CACHE ──
+model AgentAnalysis {
+  id        String   @id @default(cuid())
+  ticker    String
+  type      String   // "stock_analysis", "risk_score", "signal_generation", "trend_detection"
+  depth     String   @default("quick") // "quick" or "full"
+  content   String   @db.Text
+  sentiment String?  // "BULLISH", "NEUTRAL", "BEARISH"
+  riskScore Float?   // 0-100
+  createdAt DateTime @default(now())
+  expiresAt DateTime // 24 hours from creation for auto-cleanup
+
+  @@index([ticker, type, createdAt])
+  @@index([expiresAt])
+}
+
+// ── USER WATCHLISTS ──
+model UserWatchlist {
+  id        String   @id @default(cuid())
+  userId    String   // Clerk user ID
+  name      String   // "Defence Contractors", "AI Stocks", etc.
+  tickers   String[] // ["LMT", "PLTR", "RTX"]
+  isPublic  Boolean  @default(false)
+  views     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, createdAt])
+}
+
+// ── PRICE ALERTS ──
+model PriceAlert {
+  id        String   @id @default(cuid())
+  userId    String   // Clerk user ID
+  ticker    String
+  condition String   // "price_above", "price_below", "volume_spike", "momentum_shift"
+  value     Float    // Price threshold or % change threshold
+  active    Boolean  @default(true)
+  triggered Boolean  @default(false)
+  triggeredAt DateTime?
+  alertsSent Int     @default(0) // How many times user was notified
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, ticker, active])
+}
+
+// ── REAL-TIME STREAM SESSIONS ──
+model StreamSession {
+  id        String   @id @default(cuid())
+  clientId  String   // Browser session fingerprint
+  tickers   String[] // ["LMT", "PLTR", "RTX"]
+  isActive  Boolean  @default(true)
+  lastPing  DateTime @default(now())
+  createdAt DateTime @default(now())
+  expiresAt DateTime // 30-minute sessions for cleanup
+
+  @@index([clientId, isActive])
+  @@index([expiresAt])
+}
+
+// ── TERMINAL COMMAND HISTORY ──
+model TerminalCommand {
+  id        String   @id @default(cuid())
+  userId    String?  // Optional: if user is authenticated
+  command   String   // "/scan --sector AI --price-range 50-150"
+  result    String?  @db.Text // Command output/result
+  duration  Int      // Milliseconds
+  status    String   // "success", "error", "timeout"
+  errorMsg  String?
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
+}
