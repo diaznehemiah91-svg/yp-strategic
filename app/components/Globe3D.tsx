@@ -5,6 +5,7 @@ import * as THREE from 'three'
 import { createGlobe } from './globe/createGlobe'
 import { createRings, animateRings } from './globe/createRings'
 import { createHotspots, animateHotspots } from './globe/createHotspots'
+import { createTickers, updateTickerVisibility } from './globe/createTickers'
 
 export default function Globe3D() {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -82,6 +83,10 @@ export default function Globe3D() {
       const { group: hotspotsGroup } = createHotspots()
       globeGroup.add(hotspotsGroup)
 
+      // Add stock ticker cards
+      const { group: tickersGroup } = createTickers()
+      globeGroup.add(tickersGroup)
+
       // ===== ORBIT CONTROLS =====
       const controls = new OrbitControls(camera, renderer.domElement)
       controls.enableDamping = true
@@ -136,6 +141,9 @@ export default function Globe3D() {
 
         // Animate hotspots
         animateHotspots(hotspotsGroup, deltaTime)
+
+        // Update ticker visibility based on camera
+        updateTickerVisibility(tickersGroup, camera)
 
         // Render
         renderer.render(scene, camera)
