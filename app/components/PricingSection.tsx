@@ -18,14 +18,14 @@ const tiers = [
 
 export default function PricingSection() {
   return (
-    <>
+    <div className="bg-[#000814] px-5 py-12 -mx-5">
       <div className="font-mono text-[10px] tracking-[3px] uppercase text-[var(--accent)] mb-4 flex items-center gap-2 fade-up d6">
         <span className="w-6 h-px bg-[var(--accent)]" />◆ Intel Vault — Membership
       </div>
       <div className="grid grid-cols-3 gap-3.5 mb-7 pricing-grid fade-up d6">
         {tiers.map((t) => (
-          <div key={t.tier} className={`glass p-7 text-center transition-all ${
-            t.featured ? 'border-[rgba(0,255,80,0.25)]! shadow-[0_0_60px_rgba(0,255,80,0.06)] bg-[rgba(0,255,80,0.02)]!' : ''
+          <div key={t.tier} className={`glass p-7 text-center transition-all backdrop-blur-xl ${
+            t.featured ? 'border-[rgba(0,255,80,0.4)]! shadow-[0_0_60px_rgba(0,255,80,0.08)] bg-[rgba(4,12,8,0.8)]!' : 'bg-[rgba(4,12,8,0.7)]'
           }`}>
             <div className={`font-mono text-[10px] tracking-[3px] uppercase mb-2 ${t.featured ? 'text-[var(--accent)]' : 'text-[var(--text-dim)]'}`}>
               {t.tier}
@@ -50,6 +50,6 @@ export default function PricingSection() {
           </div>
         ))}
       </div>
-    </>
+    </div>
   );
 }

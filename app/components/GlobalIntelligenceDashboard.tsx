@@ -450,12 +450,12 @@ export default function GlobalIntelligenceDashboard() {
   }, [])
 
   return (
-    <>
+    <div className="relative w-full h-screen bg-[#000814]">
       {/* Globe Container */}
-      <div ref={containerRef} className="relative w-full h-screen bg-[#000814] overflow-hidden" />
+      <div ref={containerRef} className="absolute inset-0 overflow-hidden" />
 
       {/* Left Sidebar - Correlations */}
-      <div className="fixed left-4 top-20 w-80 glass p-4 rounded border border-[var(--border)] max-h-[400px] overflow-y-auto z-20">
+      <div className="absolute left-4 top-20 w-80 glass p-4 rounded border border-[var(--border)] max-h-[400px] overflow-y-auto z-20 pointer-events-auto">
         <div className="font-mono text-[10px] text-[var(--accent)] uppercase tracking-widest mb-4">
           ◆ Global Defence Correlations
         </div>
@@ -475,7 +475,7 @@ export default function GlobalIntelligenceDashboard() {
       </div>
 
       {/* Right Sidebar - Crypto & Futures */}
-      <div className="fixed right-4 top-20 w-80 glass p-4 rounded border border-[var(--border)] max-h-[500px] overflow-y-auto z-20">
+      <div className="absolute right-4 top-20 w-80 glass p-4 rounded border border-[var(--border)] max-h-[500px] overflow-y-auto z-20 pointer-events-auto">
         <div className="mb-6">
           <div className="font-mono text-[10px] text-[var(--accent)] uppercase tracking-widest mb-3">
             ◆ Crypto Markets
@@ -511,7 +511,7 @@ export default function GlobalIntelligenceDashboard() {
 
       {/* Top Right - Alert Panel */}
       {RISK_ZONES.map((zone) => (
-        <div key={zone.name} className="fixed top-4 right-4 glass p-4 rounded border-2 z-20"
+        <div key={zone.name} className="absolute top-4 right-4 glass p-4 rounded border-2 z-20 pointer-events-auto"
           style={{ borderColor: zone.severity === 'CRITICAL' ? '#ff0055' : '#ff8800' }}>
           <div className="flex items-center gap-2 mb-2">
             <AlertTriangle
@@ -532,13 +532,13 @@ export default function GlobalIntelligenceDashboard() {
       ))}
 
       {/* Bottom Center - Status */}
-      <div className="fixed bottom-4 left-1/2 -translate-x-1/2 glass p-4 rounded border border-[var(--border)] z-20 font-mono text-[9px]">
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 glass p-4 rounded border border-[var(--border)] z-20 font-mono text-[9px] pointer-events-auto">
         <div className="text-[var(--accent)] flex items-center gap-2 mb-2">
           <Zap size={14} />
           Risk Score System Active · 6 Geopolitical Zones · 847 Signal Events / 24h
         </div>
         <div className="text-[var(--text-dim)]">Latency: 12ms · Sources: SEC · DARPA · USASpending · Finnhub</div>
       </div>
-    </>
+    </div>
   )
 }
