@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic'
 import GlobeDetailsPanel from './GlobeDetailsPanel'
 import GlobeSearchPanel, { GlobeSearchFilters } from './GlobeSearchPanel'
 import GlobeStats from './GlobeStats'
+import GlobeHelpOverlay from './GlobeHelpOverlay'
 
 const Globe3D = dynamic(() => import('./Globe3D'), { ssr: false })
 
@@ -22,6 +23,7 @@ export default function GlobeWithDetails() {
       <GlobeDetailsPanel type={selection.type} data={selection.data} />
       <GlobeSearchPanel onFilterChange={setFilters} />
       <GlobeStats />
+      <GlobeHelpOverlay />
     </div>
   )
 }
