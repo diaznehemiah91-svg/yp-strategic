@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
-import { buildForgePrompt, type ForgeLanguage } from '@/app/lib/prompts'
+import { buildForgePrompt, type ForgeLanguage } from '@/app/lib/agents'
 
 export async function POST(req: Request) {
   try {
