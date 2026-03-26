@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
 
 const MOCK_COMPANIES = [
   { id: 1, ticker: 'NVDA', name: 'NVIDIA', sector: 'Deep-Tech', price: 875.32, change_pct: 2.45, market_cap: 2.7e12 },
@@ -9,38 +10,98 @@ const MOCK_COMPANIES = [
   { id: 6, ticker: 'CRWD', name: 'CrowdStrike', sector: 'Cyber', price: 142.56, change_pct: 2.11, market_cap: 46e9 },
 ]
 
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY!
+)
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const ticker = searchParams.get('ticker')
     const sector = searchParams.get('sector')
+    const search = searchParams.get('search')
     const page = parseInt(searchParams.get('page') || '1')
     const perPage = parseInt(searchParams.get('per_page') || '100')
 
-    let filtered = MOCK_COMPANIES
+    // Try to fetch from Supabase, fallback to mock data
+    let query = supabase.from('companies').select('*')
 
     if (ticker) {
-      filtered = filtered.filter(c => c.ticker.toLowerCase().includes(ticker.toLowerCase()))
+      query = query.ilike('ticker', `%${ticker}%`)
+    }
+
+    if (search) {
+      query = query.or(`ticker.ilike.%${search}%,company_name.ilike.%${search}%`)
     }
 
     if (sector) {
-      filtered = filtered.filter(c => c.sector === sector)
+      query = query.eq('sector', sector)
     }
 
-    const start = (page - 1) * perPage
-    const end = start + perPage
-    const paginated = filtered.slice(start, end)
+    const { data, error, count } = await query
+      .range((page - 1) * perPage, page * perPage - 1)
+      .order('ticker', { ascending: true })
+
+    if (error || !data) {
+      // Fallback to mock data if Supabase query fails
+      let filtered = MOCK_COMPANIES
+
+      if (ticker) {
+        filtered = filtered.filter(c => c.ticker.toLowerCase().includes(ticker.toLowerCase()))
+      }
+
+      if (search) {
+        const searchLower = search.toLowerCase()
+        filtered = filtered.filter(c =>
+          c.ticker.toLowerCase().includes(searchLower) ||
+          c.name.toLowerCase().includes(searchLower)
+        )
+      }
+
+      if (sector) {
+        filtered = filtered.filter(c => c.sector === sector)
+      }
+
+      const start = (page - 1) * perPage
+      const end = start + perPage
+      const paginated = filtered.slice(start, end)
+
+      return NextResponse.json(
+        {
+          data: paginated,
+          total: filtered.length,
+          page,
+          per_page: perPage,
+          source: 'mock'
+        },
+        { status: 200 }
+      )
+    }
+
+    // Format response with Supabase data
+    const formatted = data.map(c => ({
+      id: c.id,
+      ticker: c.ticker,
+      name: c.company_name,
+      sector: c.sector,
+      price: c.current_price,
+      change_pct: c.change_pct || 0,
+      market_cap: c.market_cap,
+    }))
 
     return NextResponse.json(
       {
-        data: paginated,
-        total: filtered.length,
+        data: formatted,
+        total: count || formatted.length,
         page,
         per_page: perPage,
+        source: 'supabase'
       },
       { status: 200 }
     )
   } catch (error) {
+    console.error('Companies API error:', error)
     return NextResponse.json(
       { error: 'Failed to fetch companies' },
       { status: 500 }
