@@ -23,12 +23,13 @@ export default function NavBar() {
   }, [])
 
   const navItems = [
-    { label: 'Signal Wire', href: '/signal', icon: '📡' },
-    { label: 'News', href: '/news', icon: '🌐' },
-    { label: 'Nexus Map', href: '/nexus', icon: '🗺' },
-    { label: 'Tech Levels', href: '/levels', icon: '📊' },
-    { label: 'Assets', href: '/assets', icon: '⚡' },
-    { label: 'Forge IDE', href: '/forge', icon: '⚙️', highlight: true },
+    { label: 'Signal Wire', href: '/signal' },
+    { label: 'News', href: '/news' },
+    { label: 'Nexus Map', href: '/nexus' },
+    { label: 'Tech Levels', href: '/levels' },
+    { label: 'Assets', href: '/assets' },
+    { label: 'Methodology', href: '/methodology' },
+    { label: 'Forge IDE', href: '/forge', highlight: true },
   ]
 
   const isActive = (href: string) => {
@@ -40,21 +41,21 @@ export default function NavBar() {
       <nav className="border-b border-[var(--border)] bg-black/80 backdrop-blur-md px-5 py-3 sticky top-0 z-50 flex justify-between items-center gap-6">
         {/* Logo */}
         <Link href="/" className="group flex flex-col shrink-0">
-          <span className="font-mono text-lg font-black text-[var(--accent)] group-hover:text-white transition-all tracking-tighter">
-            Y.P STRATEGIC
+          <span className="font-mono text-lg font-black text-[var(--accent)] group-hover:text-white transition-all tracking-tight">
+            Y.P. Strategic Research
           </span>
           <span className="font-mono text-[8px] text-[var(--text-dim)] font-bold uppercase tracking-widest">
-            Research Platform
+            Intelligence &amp; Analysis
           </span>
         </Link>
 
         {/* Nav Links */}
-        <div className="hidden lg:flex gap-8 flex-1">
+        <div className="hidden lg:flex gap-10 flex-1">
           {navItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className={`font-mono text-[10px] font-bold uppercase tracking-widest transition-all ${
+              className={`font-mono text-[10px] font-bold uppercase tracking-widest transition-all whitespace-nowrap ${
                 isActive(item.href)
                   ? 'text-[var(--accent)] border-b-2 border-[var(--accent)] pb-1'
                   : 'text-[var(--text-dim)] hover:text-[var(--accent)]'

@@ -5,18 +5,18 @@ import ToastProvider from './components/ToastProvider';
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? 'https://ypstrategicresearch.com'),
-  title: 'Y.P Strategic Research | Defence-Tech Intelligence Platform',
+  title: 'Y.P. Strategic Research | Defence-Tech Intelligence Platform',
   description: 'Real-time defence & deep-tech intelligence. AI-curated signal. Public proxy mapping for private companies. Crypto, futures, macro intelligence.',
   keywords: 'defence tech, intelligence, Palantir, Lockheed Martin, RTX, crypto, Bitcoin, futures, NQ, ES, Federal Reserve, geopolitical risk',
   openGraph: {
-    title: 'Y.P Strategic Research | Defence-Tech Intelligence Platform',
+    title: 'Y.P. Strategic Research | Defence-Tech Intelligence Platform',
     description: 'Where Capital Flows, Before The Market Knows',
     type: 'website',
-    siteName: 'Y.P Strategic Research',
+    siteName: 'Y.P. Strategic Research',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Y.P Strategic Research',
+    title: 'Y.P. Strategic Research',
     description: 'Defence-Tech Intelligence Platform',
   },
   robots: { index: true, follow: true },

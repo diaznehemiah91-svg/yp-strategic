@@ -77,15 +77,57 @@ export default async function Home() {
         </div>
         <div className="grid grid-cols-3 gap-3 mb-8 pillars-grid fade-up d4">
           {[
-            { icon: '🛡️', title: 'SIGNAL', desc: 'Real-time defence & deep-tech news wire. AI-curated. Zero noise. Pure signal.', href: '#signal' },
-            { icon: '💡', title: 'BRIDGEPATH', desc: 'Public proxy maps for private defence & AI companies. How to invest before IPO.', href: '#bridgepath' },
-            { icon: '📊', title: 'FORGE', desc: 'Browser-based indicator builder. Visual + code. AI-assisted Pine Script generation.', href: '#forge' },
-            { icon: '📋', title: 'REPORTS', desc: 'Weekly ypstrategicresearch.com briefings. Deep-dive sector reports. Earnings analysis.', href: '#reports' },
-            { icon: '🌐', title: 'NEXUS', desc: 'Interactive defence-tech ecosystem map. Contract awards. Funding → market flows.', href: '#nexus' },
-            { icon: '🔐', title: 'INTEL VAULT', desc: 'Free → Pro ($29) → Institutional ($199). API access. Custom research.', href: '#pricing' },
+            {
+              icon: (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                </svg>
+              ),
+              title: 'SIGNAL', desc: 'Real-time defence & deep-tech news wire. AI-curated. Zero noise. Pure signal.', href: '#signal',
+            },
+            {
+              icon: (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="3" /><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12" />
+                </svg>
+              ),
+              title: 'BRIDGEPATH', desc: 'Public proxy maps for private defence & AI companies. How to invest before IPO.', href: '#bridgepath',
+            },
+            {
+              icon: (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+                </svg>
+              ),
+              title: 'FORGE', desc: 'Browser-based indicator builder. Visual + code. AI-assisted Pine Script generation.', href: '#forge',
+            },
+            {
+              icon: (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" />
+                </svg>
+              ),
+              title: 'REPORTS', desc: 'Weekly strategic briefings. Deep-dive sector reports. Earnings analysis.', href: '#reports',
+            },
+            {
+              icon: (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10" /><line x1="2" y1="12" x2="22" y2="12" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                </svg>
+              ),
+              title: 'NEXUS', desc: 'Interactive defence-tech ecosystem map. Contract awards. Funding → market flows.', href: '#nexus',
+            },
+            {
+              icon: (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
+              ),
+              title: 'INTEL VAULT', desc: 'Free → Pro ($29) → Institutional. API access. Custom research. Priority alerts.', href: '#pricing',
+            },
           ].map((p) => (
-            <a key={p.title} href={p.href} className="glass p-5 transition-all cursor-pointer hover:border-[var(--border-bright)] hover:-translate-y-0.5 hover:shadow-[0_0_50px_rgba(0,255,80,0.08)]">
-              <span className="text-[22px] block mb-2.5">{p.icon}</span>
+            <a key={p.title} href={p.href} className="glass p-5 transition-all cursor-pointer hover:border-[var(--border-bright)] hover:-translate-y-0.5 hover:shadow-[0_0_50px_rgba(0,255,80,0.08)] group">
+              <span className="block mb-2.5 text-[var(--accent)] opacity-70 group-hover:opacity-100 transition-opacity">{p.icon}</span>
               <h3 className="text-[13px] font-bold mb-1 text-[var(--text-bright)] tracking-wide">{p.title}</h3>
               <p className="text-[11px] text-[var(--text-dim)] leading-relaxed">{p.desc}</p>
             </a>
@@ -197,8 +239,8 @@ export default async function Home() {
             <span className="w-1.5 h-1.5 bg-[var(--accent)] rounded-full animate-pulse" />
             Systems Operational
           </div>
-          <div>Feed: 847 signals / 24h</div>
-          <div>Latency: 12ms</div>
+          <div>Signals Processed: 847 / 24h</div>
+          <div>Last Refresh: &lt; 2 min ago</div>
           <div>Sources: SEC · DARPA · USASpending · NRC · FRED · CME · CoinMarketCap</div>
           <div className="text-[var(--accent)]">v2.0.0</div>
         </div>
@@ -206,8 +248,8 @@ export default async function Home() {
 
       {/* ── FOOTER ── */}
       <div className="relative z-10 text-center py-8 px-5 font-mono text-[9px] tracking-widest text-[var(--text-dim)] uppercase">
-        <div className="mb-1.5">Coordinates: 42.3601° N, 71.0589° W (Boston) · Connection: AES-256</div>
-        <div>© 2026 Y.P Strategic Research · S-Corp · All Rights Reserved</div>
+        <div className="mb-1.5">Boston, MA · Independent Research Firm · Data sourced from public records</div>
+        <div>© 2026 Y.P. Strategic Research · All Rights Reserved</div>
       </div>
     </>
   );

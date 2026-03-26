@@ -50,10 +50,17 @@ export default function AdSlot({ id, size, className = '' }: Props) {
           data-ad-slot={id}
         />
       ) : (
-        <div className="flex flex-col items-center gap-1 py-2">
-          <span>AD SPACE — {size}</span>
-          <span style={{ fontSize: 8, opacity: 0.5 }}>Configure ADSENSE_CLIENT_ID to activate</span>
-        </div>
+        <a
+          href="#pricing"
+          className="flex items-center justify-center gap-3 w-full h-full text-center no-underline group"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <span className="font-mono text-[9px] tracking-[2px] uppercase text-[var(--text-dim)] group-hover:text-[var(--accent)] transition-colors">
+            Unlock Real-Time Intelligence —{' '}
+            <span className="text-[var(--accent)] font-bold">Upgrade to Pro · $29/mo</span>
+            <span className="ml-2 opacity-60">→</span>
+          </span>
+        </a>
       )}
     </div>
   );
