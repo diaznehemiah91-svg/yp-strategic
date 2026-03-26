@@ -12,11 +12,21 @@ import { fetchLiveStockPrices, updateTickerDataOnGlobe, setupDataPolling } from 
 import { setupMobileControls } from './globe/mobileControls'
 import { setupRaycasting } from './globe/raycaster'
 
-interface Globe3DProps {
-  onSelection?: (selection: { type: 'ticker' | 'hotspot' | 'none'; data?: any }) => void
+interface GlobeFilters {
+  search?: string
+  sector?: string
+  minPrice?: number
+  maxPrice?: number
+  minChange?: number
+  severityMin?: number
 }
 
-export default function Globe3D({ onSelection }: Globe3DProps = {}) {
+interface Globe3DProps {
+  onSelection?: (selection: { type: 'ticker' | 'hotspot' | 'none'; data?: any }) => void
+  filters?: GlobeFilters
+}
+
+export default function Globe3D({ onSelection, filters }: Globe3DProps = {}) {
   const containerRef = useRef<HTMLDivElement>(null)
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null)
   const animationIdRef = useRef<number>()
@@ -201,6 +211,48 @@ export default function Globe3D({ onSelection }: Globe3DProps = {}) {
 
         // Update ticker visibility based on camera
         updateTickerVisibility(tickersGroup, camera)
+
+        // Apply filters to tickers and hotspots
+        if (filters) {
+          tickersGroup.children.forEach((child: any) => {
+            if (child.tickerData) {
+              const ticker = child.tickerData
+              let visible = true
+
+              if (filters.search) {
+                visible =
+                  visible &&
+                  (ticker.ticker.toLowerCase().includes(filters.search.toLowerCase()) ||
+                    ticker.ticker.toLowerCase().startsWith(filters.search.toLowerCase()))
+              }
+
+              if (filters.minPrice !== undefined) {
+                const price = parseFloat(ticker.price.replace('$', ''))
+                visible = visible && price >= filters.minPrice
+              }
+
+              if (filters.maxPrice !== undefined) {
+                const price = parseFloat(ticker.price.replace('$', ''))
+                visible = visible && price <= filters.maxPrice
+              }
+
+              child.visible = visible
+            }
+          })
+
+          hotspotsGroup.children.forEach((child: any) => {
+            if (child.hotspotData || child.isHotspotCore) {
+              const hotspot = child.hotspotData
+              let visible = true
+
+              if (filters.severityMin !== undefined && hotspot) {
+                visible = visible && hotspot.severity >= filters.severityMin
+              }
+
+              child.visible = visible
+            }
+          })
+        }
 
         // Animate correlation arcs
         animateCorrelationArcs(arcsGroup)
