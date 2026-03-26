@@ -76,9 +76,9 @@ export default function NavBar() {
           </button>
           <button
             onClick={() => setAuthOpen(true)}
-            className="font-mono text-[10px] tracking-[1px] uppercase px-4 py-2 rounded border border-[var(--border)] bg-[var(--accent)] text-black font-semibold hover:bg-white transition-all cursor-pointer shadow-[0_0_20px_rgba(0,255,80,0.2)] hover:shadow-[0_0_30px_rgba(0,255,80,0.4)]"
+            className="font-mono text-[10px] tracking-[1px] uppercase px-4 py-2 rounded border border-[var(--accent)] bg-[var(--accent)] text-black font-bold hover:shadow-[0_0_20px_rgba(0,255,80,0.5)] transition-all cursor-pointer"
           >
-            Sign In
+            [ ACCESS ]
           </button>
         </div>
       </nav>
