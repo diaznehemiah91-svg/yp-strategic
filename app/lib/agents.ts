@@ -5,6 +5,13 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 import { getMockStocks, getMockSignals, type SignalItem } from './mock-data';
+import {
+  buildQuickAnalysisPrompt,
+  buildFullAnalysisPrompt,
+  buildSignalGenerationPrompts,
+  buildRiskScoringPrompt,
+  buildTrendDetectionPrompt,
+} from './prompts';
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -65,11 +72,11 @@ export class IntelligenceAgent {
       throw new Error(`Stock ${ticker} not found`);
     }
 
-    const prompt = depth === 'quick'
-      ? this.buildQuickAnalysisPrompt(stock)
-      : this.buildFullAnalysisPrompt(stock);
+    const { system, user } = depth === 'quick'
+      ? buildQuickAnalysisPrompt(stock)
+      : buildFullAnalysisPrompt(stock);
 
-    return this.streamAnalysis(prompt, `stock_analysis_${ticker}`);
+    return this.streamAnalysis(user, `stock_analysis_${ticker}`, system);
   }
 
   /**
@@ -80,28 +87,20 @@ export class IntelligenceAgent {
       return this.generateMockSignals(stocks);
     }
 
-    const systemPrompt = `You are a defense-tech market intelligence analyst. Generate 3-5 high-value trading signals based on the current market context. Return ONLY a JSON array with no markdown formatting:
-[
-  {
-    "title": "signal title",
-    "summary": "brief explanation",
-    "category": "DEFENCE|AI|CYBER|NUCLEAR|SPACE|QUANTUM|FED|CRYPTO|GEOPOLITICAL",
-    "severity": "CRITICAL|ALERT|INFO",
-    "tickers": ["LMT", "PLTR"]
-  }
-]`;
-
-    const userPrompt = `Current stocks: ${stocks
+    const stocksSummary = stocks
       .slice(0, 10)
-      .map(s => `${s.ticker} $${s.price} (${s.changePct > 0 ? '+' : ''}${s.changePct.toFixed(2)}%)`)
-      .join(', ')}
+      .map(s => `${s.ticker} $${s.price.toFixed(2)} (${s.changePct > 0 ? '+' : ''}${s.changePct.toFixed(2)}%) [${s.sector ?? 'Unknown'}]`)
+      .join('\n');
 
-Recent signals: ${signals
+    const recentSignalsSummary = signals
       .slice(0, 5)
-      .map(s => `${s.category}: ${s.title}`)
-      .join('; ')}
+      .map(s => `[${s.severity}] ${s.category}: ${s.title}`)
+      .join('\n') || 'None';
 
-Generate 3 new trading signals based on these patterns.`;
+    const { system: systemPrompt, user: userPrompt } = buildSignalGenerationPrompts(
+      stocksSummary,
+      recentSignalsSummary
+    );
 
     try {
       const response = await anthropic.messages.create({
@@ -158,10 +157,7 @@ Generate 3 new trading signals based on these patterns.`;
 
     const relatedSignals = signals.filter(s => s.tickers.includes(ticker.toUpperCase()));
 
-    const prompt = `Rate the risk level (0-100) for ${ticker} based on these recent signals:
-${relatedSignals.map(s => `- [${s.severity}] ${s.title} (${s.category})`).join('\n')}
-
-Return ONLY this JSON format: {"score": 65, "rationale": "brief explanation"}`;
+    const prompt = buildRiskScoringPrompt(ticker, relatedSignals);
 
     try {
       const response = await anthropic.messages.create({
@@ -192,13 +188,12 @@ Return ONLY this JSON format: {"score": 65, "rationale": "brief explanation"}`;
       return this.generateMockTrends(stocks);
     }
 
-    const prompt = `Analyze these stocks and identify 2-3 major market trends:
-${stocks
-  .slice(0, 20)
-  .map(s => `${s.ticker}: $${s.price.toFixed(2)} (${s.changePct > 0 ? '+' : ''}${s.changePct.toFixed(2)}%), Sector: ${s.sector || 'Unknown'}`)
-  .join('\n')}
+    const stocksSummary = stocks
+      .slice(0, 20)
+      .map(s => `${s.ticker}: $${s.price.toFixed(2)} (${s.changePct > 0 ? '+' : ''}${s.changePct.toFixed(2)}%) | Sector: ${s.sector ?? 'Unknown'}`)
+      .join('\n');
 
-Return ONLY JSON: [{"trend": "description", "confidence": 0.85}]`;
+    const prompt = buildTrendDetectionPrompt(stocksSummary);
 
     try {
       const response = await anthropic.messages.create({
@@ -222,40 +217,25 @@ Return ONLY JSON: [{"trend": "description", "confidence": 0.85}]`;
   // ── PRIVATE HELPERS ──
 
   private buildQuickAnalysisPrompt(stock: StockData): string {
-    return `Provide a 1-paragraph investment thesis for ${stock.ticker} (${stock.name}) currently trading at $${stock.price.toFixed(
-      2
-    )} (${stock.changePct > 0 ? '+' : ''}${stock.changePct.toFixed(2)}%).
-
-Focus on:
-1. Current momentum (is it oversold/overbought?)
-2. Sector context (${stock.sector || 'Defence-Tech'})
-3. Key catalysts ahead
-
-Keep response concise (3-4 sentences).`;
+    const { user } = buildQuickAnalysisPrompt(stock);
+    return user;
   }
 
   private buildFullAnalysisPrompt(stock: StockData): string {
-    return `Provide a comprehensive analysis for ${stock.ticker} (${stock.name}) at $${stock.price.toFixed(2)}:
-
-1. **Technical Analysis** - Price action, momentum, support/resistance levels
-2. **Fundamental Analysis** - Valuation, growth prospects, competitive position
-3. **Geopolitical Risk** - Defense/tech sector-specific risks (contracts, sanctions, cyber threats)
-4. **Investment Thesis** - Should a long-term investor buy, hold, or sell?
-5. **Catalysts** - What events in the next 90 days could move the price?
-
-Structure your response with these 5 sections. Be specific and actionable.`;
+    const { user } = buildFullAnalysisPrompt(stock);
+    return user;
   }
 
   private async streamAnalysis(
     prompt: string,
-    cacheKey: string
+    cacheKey: string,
+    systemPrompt?: string
   ): Promise<AsyncIterable<string>> {
-    // For now, we'll do non-streaming to avoid complexity
-    // In production, you'd use streaming: true and handle chunks
     try {
       const response = await anthropic.messages.create({
         model: 'claude-opus-4-6',
         max_tokens: 2048,
+        ...(systemPrompt ? { system: systemPrompt } : {}),
         messages: [{ role: 'user', content: prompt }],
       });
 
