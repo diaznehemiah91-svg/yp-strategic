@@ -6,6 +6,7 @@ import { createGlobe } from './globe/createGlobe'
 import { createRings, animateRings } from './globe/createRings'
 import { createHotspots, animateHotspots } from './globe/createHotspots'
 import { createTickers, updateTickerVisibility } from './globe/createTickers'
+import { createCorrelationArcs, animateCorrelationArcs } from './globe/createCorrelationArcs'
 
 export default function Globe3D() {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -87,6 +88,10 @@ export default function Globe3D() {
       const { group: tickersGroup } = createTickers()
       globeGroup.add(tickersGroup)
 
+      // Add correlation arcs between stocks
+      const { group: arcsGroup } = createCorrelationArcs()
+      globeGroup.add(arcsGroup)
+
       // ===== ORBIT CONTROLS =====
       const controls = new OrbitControls(camera, renderer.domElement)
       controls.enableDamping = true
@@ -144,6 +149,9 @@ export default function Globe3D() {
 
         // Update ticker visibility based on camera
         updateTickerVisibility(tickersGroup, camera)
+
+        // Animate correlation arcs
+        animateCorrelationArcs(arcsGroup)
 
         // Render
         renderer.render(scene, camera)
