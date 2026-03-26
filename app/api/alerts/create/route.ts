@@ -22,11 +22,36 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Store alert in Supabase
+    const { data, error } = await supabase
+      .from('user_alerts')
+      .insert({
+        user_id: user.id,
+        ticker: ticker.toUpperCase(),
+        target_price: parseFloat(target_price),
+        sms_enabled: sms_enabled ?? true,
+        created_at: new Date(),
+      })
+      .select()
+
+    if (error) {
+      console.error('Failed to create alert:', error)
+      return NextResponse.json(
+        { error: 'Failed to create alert' },
+        { status: 500 }
+      )
+    }
+
     return NextResponse.json(
-      { message: 'Alert armed successfully' },
+      {
+        success: true,
+        message: `Alert armed for ${ticker} at $${target_price}`,
+        alert: data?.[0],
+      },
       { status: 201 }
     )
   } catch (error) {
+    console.error('Create alert error:', error)
     return NextResponse.json(
       { error: 'Failed to create alert' },
       { status: 500 }
