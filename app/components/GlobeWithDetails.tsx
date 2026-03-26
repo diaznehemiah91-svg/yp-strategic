@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import dynamic from 'next/dynamic'
 import GlobeDetailsPanel from './GlobeDetailsPanel'
 import GlobeSearchPanel, { GlobeSearchFilters } from './GlobeSearchPanel'
+import GlobeStats from './GlobeStats'
 
 const Globe3D = dynamic(() => import('./Globe3D'), { ssr: false })
 
@@ -20,6 +21,7 @@ export default function GlobeWithDetails() {
       <Globe3D onSelection={setSelection} filters={filters} />
       <GlobeDetailsPanel type={selection.type} data={selection.data} />
       <GlobeSearchPanel onFilterChange={setFilters} />
+      <GlobeStats />
     </div>
   )
 }
