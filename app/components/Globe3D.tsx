@@ -8,6 +8,7 @@ import { createHotspots, animateHotspots } from './globe/createHotspots'
 import { createTickers, updateTickerVisibility } from './globe/createTickers'
 import { createCorrelationArcs, animateCorrelationArcs } from './globe/createCorrelationArcs'
 import { createPedestal, animatePedestal } from './globe/createPedestal'
+import { fetchLiveStockPrices, updateTickerDataOnGlobe, setupDataPolling } from './globe/dataBinding'
 
 export default function Globe3D() {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -97,6 +98,16 @@ export default function Globe3D() {
       const pedestalGroup = createPedestal()
       scene.add(pedestalGroup)
 
+      // ===== LIVE DATA BINDING =====
+      const tickers = ['LMT', 'RTX', 'PLTR', 'NVDA', 'CRWD', 'OKLO', 'RKLB', 'IONQ']
+      let cleanupDataPolling: (() => void) | null = null
+
+      // Set up live price updates
+      cleanupDataPolling = setupDataPolling(tickers, (liveData) => {
+        const tickerSprites = tickersGroup.children
+        updateTickerDataOnGlobe(tickerSprites as any, liveData)
+      }, 5000) // Update every 5 seconds
+
       // ===== ORBIT CONTROLS =====
       const controls = new OrbitControls(camera, renderer.domElement)
       controls.enableDamping = true
@@ -182,6 +193,9 @@ export default function Globe3D() {
       // ===== RETURN CLEANUP =====
       return () => {
         window.removeEventListener('resize', handleResize)
+        if (cleanupDataPolling) {
+          cleanupDataPolling()
+        }
         if (animationId !== null) {
           cancelAnimationFrame(animationId)
         }
