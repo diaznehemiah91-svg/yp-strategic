@@ -7,6 +7,7 @@ import { createRings, animateRings } from './globe/createRings'
 import { createHotspots, animateHotspots } from './globe/createHotspots'
 import { createTickers, updateTickerVisibility } from './globe/createTickers'
 import { createCorrelationArcs, animateCorrelationArcs } from './globe/createCorrelationArcs'
+import { createPedestal, animatePedestal } from './globe/createPedestal'
 
 export default function Globe3D() {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -92,6 +93,10 @@ export default function Globe3D() {
       const { group: arcsGroup } = createCorrelationArcs()
       globeGroup.add(arcsGroup)
 
+      // Add pedestal base
+      const pedestalGroup = createPedestal()
+      scene.add(pedestalGroup)
+
       // ===== ORBIT CONTROLS =====
       const controls = new OrbitControls(camera, renderer.domElement)
       controls.enableDamping = true
@@ -152,6 +157,9 @@ export default function Globe3D() {
 
         // Animate correlation arcs
         animateCorrelationArcs(arcsGroup)
+
+        // Animate pedestal
+        animatePedestal(pedestalGroup)
 
         // Render
         renderer.render(scene, camera)
