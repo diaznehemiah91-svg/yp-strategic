@@ -10,8 +10,13 @@ import { createCorrelationArcs, animateCorrelationArcs } from './globe/createCor
 import { createPedestal, animatePedestal } from './globe/createPedestal'
 import { fetchLiveStockPrices, updateTickerDataOnGlobe, setupDataPolling } from './globe/dataBinding'
 import { setupMobileControls } from './globe/mobileControls'
+import { setupRaycasting } from './globe/raycaster'
 
-export default function Globe3D() {
+interface Globe3DProps {
+  onSelection?: (selection: { type: 'ticker' | 'hotspot' | 'none'; data?: any }) => void
+}
+
+export default function Globe3D({ onSelection }: Globe3DProps = {}) {
   const containerRef = useRef<HTMLDivElement>(null)
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null)
   const animationIdRef = useRef<number>()
@@ -132,6 +137,13 @@ export default function Globe3D() {
         cleanupMobileControls = setupMobileControls(container, camera, globeGroup)
       }
 
+      // ===== RAYCASTING FOR INTERACTION =====
+      let cleanupRaycasting: (() => void) | null = null
+      if (container && onSelection) {
+        cleanupRaycasting = setupRaycasting(container, camera, scene, onSelection)
+        console.log('[Globe3D] Raycasting interaction enabled')
+      }
+
       // ===== ORBIT CONTROLS =====
       const controls = new OrbitControls(camera, renderer.domElement)
       controls.enableDamping = true
@@ -223,6 +235,9 @@ export default function Globe3D() {
         }
         if (cleanupMobileControls) {
           cleanupMobileControls()
+        }
+        if (cleanupRaycasting) {
+          cleanupRaycasting()
         }
         if (animationId !== null) {
           cancelAnimationFrame(animationId)
