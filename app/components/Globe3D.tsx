@@ -9,6 +9,7 @@ import { createTickers, updateTickerVisibility } from './globe/createTickers'
 import { createCorrelationArcs, animateCorrelationArcs } from './globe/createCorrelationArcs'
 import { createPedestal, animatePedestal } from './globe/createPedestal'
 import { fetchLiveStockPrices, updateTickerDataOnGlobe, setupDataPolling } from './globe/dataBinding'
+import { setupMobileControls } from './globe/mobileControls'
 
 export default function Globe3D() {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -108,6 +109,12 @@ export default function Globe3D() {
         updateTickerDataOnGlobe(tickerSprites as any, liveData)
       }, 5000) // Update every 5 seconds
 
+      // ===== MOBILE GESTURE CONTROLS =====
+      let cleanupMobileControls: (() => void) | null = null
+      if (container) {
+        cleanupMobileControls = setupMobileControls(container, camera, globeGroup)
+      }
+
       // ===== ORBIT CONTROLS =====
       const controls = new OrbitControls(camera, renderer.domElement)
       controls.enableDamping = true
@@ -195,6 +202,9 @@ export default function Globe3D() {
         window.removeEventListener('resize', handleResize)
         if (cleanupDataPolling) {
           cleanupDataPolling()
+        }
+        if (cleanupMobileControls) {
+          cleanupMobileControls()
         }
         if (animationId !== null) {
           cancelAnimationFrame(animationId)
