@@ -25,12 +25,17 @@ export default function Globe3D() {
 
     // Async initialization to load OrbitControls
     const initializeGlobe = async () => {
-      // @ts-expect-error - type declarations not available for three examples
-      const { OrbitControls } = await import('three/examples/jsm/controls/OrbitControls')
+      try {
+        console.log('[Globe3D] Initializing globe...')
+        // @ts-expect-error - type declarations not available for three examples
+        const { OrbitControls } = await import('three/examples/jsm/controls/OrbitControls')
+        console.log('[Globe3D] OrbitControls loaded')
 
       // ===== SCENE SETUP =====
+      console.log('[Globe3D] Creating scene...')
       const scene = new THREE.Scene()
       scene.background = new THREE.Color(0x000814)
+      console.log('[Globe3D] Scene created')
 
       // ===== CAMERA =====
       const camera = new THREE.PerspectiveCamera(
@@ -53,6 +58,11 @@ export default function Globe3D() {
       renderer.shadowMap.type = THREE.PCFShadowMap
       container.appendChild(renderer.domElement)
       rendererRef.current = renderer
+      console.log('[Globe3D] WebGL Renderer initialized:', {
+        width: container.clientWidth,
+        height: container.clientHeight,
+        pixelRatio: window.devicePixelRatio,
+      })
 
       // ===== LIGHTING =====
       const ambientLight = new THREE.AmbientLight(0x111122, 0.3)
@@ -72,32 +82,39 @@ export default function Globe3D() {
       scene.add(accentLight)
 
       // ===== CREATE GLOBE COMPONENTS =====
+      console.log('[Globe3D] Creating globe components...')
       const globeGroup = new THREE.Group()
       scene.add(globeGroup)
 
       // Add Earth globe
       const globe = createGlobe()
       globeGroup.add(globe)
+      console.log('[Globe3D] Earth globe added')
 
       // Add orbital rings
       const rings = createRings()
       globeGroup.add(rings)
+      console.log('[Globe3D] Orbital rings added')
 
       // Add geopolitical hotspots
       const { group: hotspotsGroup } = createHotspots()
       globeGroup.add(hotspotsGroup)
+      console.log('[Globe3D] Hotspots added')
 
       // Add stock ticker cards
       const { group: tickersGroup } = createTickers()
       globeGroup.add(tickersGroup)
+      console.log('[Globe3D] Ticker sprites added')
 
       // Add correlation arcs between stocks
       const { group: arcsGroup } = createCorrelationArcs()
       globeGroup.add(arcsGroup)
+      console.log('[Globe3D] Correlation arcs added')
 
       // Add pedestal base
       const pedestalGroup = createPedestal()
       scene.add(pedestalGroup)
+      console.log('[Globe3D] Pedestal base added')
 
       // ===== LIVE DATA BINDING =====
       const tickers = ['LMT', 'RTX', 'PLTR', 'NVDA', 'CRWD', 'OKLO', 'RKLB', 'IONQ']
@@ -184,6 +201,7 @@ export default function Globe3D() {
       }
 
       animate()
+      console.log('[Globe3D] Animation loop started - Globe is rendering!')
 
       // ===== HANDLE RESIZE =====
       const handleResize = () => {
@@ -214,6 +232,11 @@ export default function Globe3D() {
         }
         renderer.dispose()
       }
+      } catch (error) {
+        console.error('[Globe3D] FATAL ERROR during initialization:', error)
+        console.error('[Globe3D] Stack:', error instanceof Error ? error.stack : 'unknown')
+        throw error
+      }
     }
 
     // Initialize and setup cleanup
@@ -222,9 +245,19 @@ export default function Globe3D() {
     initializeGlobe()
       .then((cleanupFn) => {
         cleanup = cleanupFn
+        console.log('[Globe3D] ✅ Globe fully initialized and running')
       })
       .catch((error) => {
-        console.error('Failed to initialize Globe3D:', error)
+        console.error('[Globe3D] ❌ Failed to initialize Globe3D:', error)
+        if (container) {
+          container.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;color:red;font-family:monospace;background:#000814">
+            <div>
+              <div style="color:#ff3366;font-size:14px">ERROR: Failed to load 3D Globe</div>
+              <div style="color:#888;font-size:12px;margin-top:8px">${error instanceof Error ? error.message : 'Unknown error'}</div>
+              <div style="color:#888;font-size:11px;margin-top:4px">Check browser console for details</div>
+            </div>
+          </div>`
+        }
       })
 
     // Cleanup on unmount
