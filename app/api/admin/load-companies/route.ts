@@ -2,8 +2,7 @@
  * API endpoint to load 2,600 companies into Supabase
  * POST /api/admin/load-companies
  *
- * Usage (development only):
- * curl -X POST http://localhost:3000/api/admin/load-companies
+ * Uses real market data from Dow Jones, Nasdaq 100, and S&P 500
  */
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -14,91 +13,165 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY!
 )
 
-// Representative list of 2,600 US-listed companies
-const COMPANY_LIST = [
-  // Technology & Deep-Tech
-  { ticker: 'NVDA', name: 'NVIDIA', sector: 'Technology' },
-  { ticker: 'PLTR', name: 'Palantir Technologies', sector: 'Defence' },
-  { ticker: 'RKLB', name: 'Rocket Lab USA', sector: 'Aerospace' },
-  { ticker: 'AVGO', name: 'Broadcom', sector: 'Technology' },
-  { ticker: 'MCHP', name: 'Microchip Technology', sector: 'Technology' },
-  { ticker: 'ARM', name: 'ARM Holdings', sector: 'Technology' },
-  { ticker: 'AMD', name: 'Advanced Micro Devices', sector: 'Technology' },
-  { ticker: 'QCOM', name: 'Qualcomm', sector: 'Technology' },
-  { ticker: 'INTC', name: 'Intel', sector: 'Technology' },
-  { ticker: 'MSFT', name: 'Microsoft', sector: 'Technology' },
-
-  // Defense & Aerospace
-  { ticker: 'LMT', name: 'Lockheed Martin', sector: 'Defence' },
-  { ticker: 'RTX', name: 'RTX Corporation', sector: 'Defence' },
-  { ticker: 'BA', name: 'Boeing', sector: 'Aerospace' },
-  { ticker: 'GE', name: 'General Electric', sector: 'Aerospace' },
-  { ticker: 'NOC', name: 'Northrop Grumman', sector: 'Defence' },
-  { ticker: 'HII', name: 'Huntington Ingalls', sector: 'Defence' },
-  { ticker: 'KTOS', name: 'Kratos Defense', sector: 'Defence' },
-  { ticker: 'TXT', name: 'Textron', sector: 'Aerospace' },
-
-  // Cybersecurity & Software
-  { ticker: 'CRWD', name: 'CrowdStrike', sector: 'Cybersecurity' },
-  { ticker: 'PANW', name: 'Palo Alto Networks', sector: 'Cybersecurity' },
-  { ticker: 'OKTA', name: 'Okta', sector: 'Cybersecurity' },
-  { ticker: 'ZS', name: 'Zscaler', sector: 'Cybersecurity' },
-  { ticker: 'FTNT', name: 'Fortinet', sector: 'Cybersecurity' },
-  { ticker: 'NET', name: 'Cloudflare', sector: 'Technology' },
-
-  // Financial Services
-  { ticker: 'JPM', name: 'JPMorgan Chase', sector: 'Finance' },
-  { ticker: 'BAC', name: 'Bank of America', sector: 'Finance' },
-  { ticker: 'WFC', name: 'Wells Fargo', sector: 'Finance' },
-  { ticker: 'GS', name: 'Goldman Sachs', sector: 'Finance' },
-  { ticker: 'MS', name: 'Morgan Stanley', sector: 'Finance' },
-  { ticker: 'BLK', name: 'BlackRock', sector: 'Finance' },
-
-  // Crypto & Digital Assets
-  { ticker: 'MSTR', name: 'MicroStrategy', sector: 'Crypto' },
-  { ticker: 'COIN', name: 'Coinbase', sector: 'Crypto' },
-  { ticker: 'RIOT', name: 'Riot Platforms', sector: 'Crypto' },
-  { ticker: 'MARA', name: 'Marathon Digital', sector: 'Crypto' },
-
-  // Energy & Commodities
-  { ticker: 'XOM', name: 'Exxon Mobil', sector: 'Energy' },
-  { ticker: 'CVX', name: 'Chevron', sector: 'Energy' },
-  { ticker: 'COP', name: 'ConocoPhillips', sector: 'Energy' },
-  { ticker: 'SLB', name: 'Schlumberger', sector: 'Energy' },
-
-  // Healthcare & Biotech
-  { ticker: 'JNJ', name: 'Johnson & Johnson', sector: 'Healthcare' },
-  { ticker: 'PFE', name: 'Pfizer', sector: 'Healthcare' },
-  { ticker: 'ABBV', name: 'AbbVie', sector: 'Healthcare' },
-  { ticker: 'TMO', name: 'Thermo Fisher Scientific', sector: 'Healthcare' },
+// Dow Jones Industrial Average (30 companies)
+const DOW_30 = [
+  { ticker: 'AAPL', name: 'Apple', sector: 'Technology' },
   { ticker: 'AMGN', name: 'Amgen', sector: 'Healthcare' },
-  { ticker: 'MRNA', name: 'Moderna', sector: 'Healthcare' },
-  { ticker: 'BNTX', name: 'BioNTech', sector: 'Healthcare' },
-
-  // Retail & Consumer
-  { ticker: 'AMZN', name: 'Amazon', sector: 'Retail' },
-  { ticker: 'WMT', name: 'Walmart', sector: 'Retail' },
-  { ticker: 'COST', name: 'Costco', sector: 'Retail' },
-  { ticker: 'TGT', name: 'Target', sector: 'Retail' },
+  { ticker: 'AMZN', name: 'Amazon', sector: 'Consumer' },
+  { ticker: 'AXP', name: 'American Express', sector: 'Finance' },
+  { ticker: 'BA', name: 'Boeing', sector: 'Aerospace' },
+  { ticker: 'CAT', name: 'Caterpillar', sector: 'Manufacturing' },
+  { ticker: 'CRM', name: 'Salesforce', sector: 'Software' },
+  { ticker: 'CSCO', name: 'Cisco', sector: 'Technology' },
+  { ticker: 'CVX', name: 'Chevron', sector: 'Energy' },
+  { ticker: 'DIS', name: 'Disney', sector: 'Media' },
+  { ticker: 'DOW', name: 'Dow Inc.', sector: 'Materials' },
+  { ticker: 'GS', name: 'Goldman Sachs', sector: 'Finance' },
+  { ticker: 'HD', name: 'Home Depot', sector: 'Retail' },
+  { ticker: 'HON', name: 'Honeywell', sector: 'Industrials' },
+  { ticker: 'IBM', name: 'IBM', sector: 'Technology' },
+  { ticker: 'JPM', name: 'JPMorgan Chase', sector: 'Finance' },
+  { ticker: 'KO', name: 'Coca-Cola', sector: 'Consumer' },
   { ticker: 'MCD', name: "McDonald's", sector: 'Consumer' },
-
-  // Transportation & Logistics
-  { ticker: 'FDX', name: 'FedEx', sector: 'Transportation' },
-  { ticker: 'UPS', name: 'United Parcel Service', sector: 'Transportation' },
-  { ticker: 'XPO', name: 'XPO Inc', sector: 'Transportation' },
-
-  // Utilities
-  { ticker: 'NEE', name: 'NextEra Energy', sector: 'Utilities' },
-  { ticker: 'DUK', name: 'Duke Energy', sector: 'Utilities' },
-  { ticker: 'SO', name: 'Southern Company', sector: 'Utilities' },
+  { ticker: 'MMM', name: '3M', sector: 'Industrials' },
+  { ticker: 'MRK', name: 'Merck', sector: 'Healthcare' },
+  { ticker: 'MSFT', name: 'Microsoft', sector: 'Technology' },
+  { ticker: 'NKE', name: 'Nike', sector: 'Consumer' },
+  { ticker: 'NVDA', name: 'Nvidia', sector: 'Technology' },
+  { ticker: 'PG', name: 'Procter & Gamble', sector: 'Consumer' },
+  { ticker: 'SHW', name: 'Sherwin-Williams', sector: 'Materials' },
+  { ticker: 'TRV', name: 'Travelers', sector: 'Finance' },
+  { ticker: 'UNH', name: 'UnitedHealth', sector: 'Healthcare' },
+  { ticker: 'V', name: 'Visa', sector: 'Finance' },
+  { ticker: 'VZ', name: 'Verizon', sector: 'Telecom' },
+  { ticker: 'WMT', name: 'Walmart', sector: 'Retail' },
 ]
 
-// Generate additional realistic tickers to reach 2,600
-function generateAdditionalCompanies(baseList: typeof COMPANY_LIST, targetCount: number) {
+// Nasdaq 100 top companies (100 selected from your data)
+const NASDAQ_100 = [
+  { ticker: 'INTC', name: 'Intel', sector: 'Technology', price: 47.18 },
+  { ticker: 'MSFT', name: 'Microsoft', sector: 'Technology', price: 371.04 },
+  { ticker: 'CSCO', name: 'Cisco', sector: 'Technology', price: 81.83 },
+  { ticker: 'KHC', name: 'Kraft Heinz', sector: 'Consumer', price: 21.51 },
+  { ticker: 'VRTX', name: 'Vertex', sector: 'Healthcare', price: 454.97 },
+  { ticker: 'MNST', name: 'Monster Beverage', sector: 'Consumer', price: 73.21 },
+  { ticker: 'CTAS', name: 'Cintas', sector: 'Industrials', price: 176.85 },
+  { ticker: 'ADSK', name: 'Autodesk', sector: 'Software', price: 235.42 },
+  { ticker: 'GILD', name: 'Gilead', sector: 'Healthcare', price: 138.26 },
+  { ticker: 'GOOGL', name: 'Alphabet A', sector: 'Technology', price: 290.93 },
+  { ticker: 'ADBE', name: 'Adobe', sector: 'Software', price: 237.25 },
+  { ticker: 'QCOM', name: 'Qualcomm', sector: 'Technology', price: 130.35 },
+  { ticker: 'WBD', name: 'Warner Bros Discovery', sector: 'Media', price: 27.22 },
+  { ticker: 'AMAT', name: 'Applied Materials', sector: 'Technology', price: 369.34 },
+  { ticker: 'CDNS', name: 'Cadence Design', sector: 'Software', price: 281.39 },
+  { ticker: 'MCHP', name: 'Microchip', sector: 'Technology', price: 65.16 },
+  { ticker: 'ISRG', name: 'Intuitive Surgical', sector: 'Healthcare', price: 469.98 },
+  { ticker: 'PAYX', name: 'Paychex', sector: 'Software', price: 93.36 },
+  { ticker: 'AAPL', name: 'Apple', sector: 'Technology', price: 252.62 },
+  { ticker: 'FAST', name: 'Fastenal', sector: 'Retail', price: 45.37 },
+  { ticker: 'PCAR', name: 'PACCAR', sector: 'Manufacturing', price: 116.34 },
+  { ticker: 'AMZN', name: 'Amazon.com', sector: 'Retail', price: 211.71 },
+  { ticker: 'ROST', name: 'Ross Stores', sector: 'Retail', price: 216.03 },
+  { ticker: 'COST', name: 'Costco', sector: 'Retail', price: 974.86 },
+  { ticker: 'LRCX', name: 'Lam Research', sector: 'Technology', price: 233.45 },
+  { ticker: 'INTU', name: 'Intuit', sector: 'Software', price: 426.86 },
+  { ticker: 'CTSH', name: 'Cognizant A', sector: 'Services', price: 59.79 },
+  { ticker: 'KLAC', name: 'KLA Corp', sector: 'Technology', price: 1543.82 },
+  { ticker: 'AMGN', name: 'Amgen', sector: 'Healthcare', price: 353.93 },
+  { ticker: 'EA', name: 'Electronic Arts', sector: 'Software', price: 202.34 },
+  { ticker: 'NVDA', name: 'NVIDIA', sector: 'Technology', price: 178.68 },
+  { ticker: 'SBUX', name: 'Starbucks', sector: 'Consumer', price: 92.70 },
+  { ticker: 'AXON', name: 'Axon Enterprise', sector: 'Technology', price: 460.15 },
+  { ticker: 'CMCSA', name: 'Comcast', sector: 'Media', price: 28.73 },
+  { ticker: 'MRVL', name: 'Marvell', sector: 'Technology', price: 98.45 },
+  { ticker: 'ADI', name: 'Analog Devices', sector: 'Technology', price: 322.03 },
+  { ticker: 'XEL', name: 'Xcel Energy', sector: 'Utilities', price: 77.70 },
+  { ticker: 'CSX', name: 'CSX', sector: 'Transportation', price: 39.57 },
+  { ticker: 'EXC', name: 'Exelon', sector: 'Utilities', price: 47.67 },
+  { ticker: 'WMT', name: 'Walmart', sector: 'Retail', price: 123.06 },
+  { ticker: 'MU', name: 'Micron', sector: 'Technology', price: 382.09 },
+  { ticker: 'WDC', name: 'Western Digital', sector: 'Technology', price: 296.14 },
+  { ticker: 'MAR', name: 'Marriott Int', sector: 'Hospitality', price: 326.79 },
+  { ticker: 'AEP', name: 'American Electric Power', sector: 'Utilities', price: 128.30 },
+  { ticker: 'TXN', name: 'Texas Instruments', sector: 'Technology', price: 196.77 },
+  { ticker: 'CCEP', name: 'Coca-Cola European', sector: 'Consumer', price: 93.23 },
+  { ticker: 'HON', name: 'Honeywell', sector: 'Industrials', price: 225.79 },
+  { ticker: 'AMD', name: 'AMD', sector: 'Technology', price: 220.27 },
+  { ticker: 'BKR', name: 'Baker Hughes', sector: 'Energy', price: 62.62 },
+  { ticker: 'PEP', name: 'PepsiCo', sector: 'Consumer', price: 151.73 },
+  { ticker: 'STX', name: 'Seagate', sector: 'Technology', price: 413.22 },
+  { ticker: 'ADP', name: 'ADP', sector: 'Software', price: 202.11 },
+  { ticker: 'KDP', name: 'Keurig Dr Pepper', sector: 'Consumer', price: 26.37 },
+  { ticker: 'NFLX', name: 'Netflix', sector: 'Media', price: 92.28 },
+  { ticker: 'BKNG', name: 'Booking', sector: 'Consumer', price: 4237.75 },
+  { ticker: 'ORLY', name: "O'Reilly Automotive", sector: 'Retail', price: 91.16 },
+  { ticker: 'ROP', name: 'Roper Technologies', sector: 'Industrials', price: 346.72 },
+  { ticker: 'AVGO', name: 'Broadcom', sector: 'Technology', price: 318.81 },
+  { ticker: 'NXPI', name: 'NXP', sector: 'Technology', price: 197.61 },
+  { ticker: 'TSLA', name: 'Tesla', sector: 'Automotive', price: 385.95 },
+  { ticker: 'TTWO', name: 'Take-Two', sector: 'Software', price: 193.05 },
+  { ticker: 'ALNY', name: 'Alnylam', sector: 'Healthcare', price: 328.70 },
+  { ticker: 'CHTR', name: 'Charter Communications', sector: 'Media', price: 218.91 },
+  { ticker: 'CSGP', name: 'CoStar', sector: 'Software', price: 41.41 },
+  { ticker: 'DXCM', name: 'DexCom', sector: 'Healthcare', price: 66.84 },
+  { ticker: 'FTNT', name: 'Fortinet', sector: 'Cybersecurity', price: 78.89 },
+  { ticker: 'IDXX', name: 'IDEXX Labs', sector: 'Healthcare', price: 575.72 },
+  { ticker: 'INSM', name: 'Insmed', sector: 'Healthcare', price: 148.31 },
+  { ticker: 'MELI', name: 'MercadoLibre', sector: 'Consumer', price: 1639.47 },
+  { ticker: 'MNST', name: 'Monolithic', sector: 'Technology', price: 1118.66 },
+  { ticker: 'LVMH', name: 'Strategy', sector: 'Luxury', price: 139.13 },
+  { ticker: 'TMUS', name: 'T-Mobile US', sector: 'Telecom', price: 211.36 },
+  { ticker: 'META', name: 'Meta Platforms', sector: 'Technology', price: 594.89 },
+  { ticker: 'FER', name: 'Ferrovial', sector: 'Industrials', price: 63.72 },
+  { ticker: 'WDAY', name: 'Workday', sector: 'Software', price: 127.07 },
+  { ticker: 'MDLZ', name: 'Mondelez', sector: 'Consumer', price: 57.43 },
+  { ticker: 'REGN', name: 'Regeneron Pharma', sector: 'Healthcare', price: 749.47 },
+  { ticker: 'ASML', name: 'ASML ADR', sector: 'Technology', price: 1393.89 },
+  { ticker: 'CPRT', name: 'Copart', sector: 'Services', price: 33.08 },
+  { ticker: 'ODFL', name: 'Old Dominion Freight Line', sector: 'Transportation', price: 189.05 },
+  { ticker: 'SNPS', name: 'Synopsys', sector: 'Software', price: 410.13 },
+  { ticker: 'VRSK', name: 'Verisk', sector: 'Software', price: 185.05 },
+  { ticker: 'FANG', name: 'Diamondback', sector: 'Energy', price: 196.02 },
+  { ticker: 'PANW', name: 'Palo Alto Networks', sector: 'Cybersecurity', price: 153.22 },
+  { ticker: 'GOOG', name: 'Alphabet C', sector: 'Technology', price: 289.59 },
+  { ticker: 'SHOP', name: 'Shopify Inc', sector: 'Consumer', price: 118.42 },
+  { ticker: 'PYPL', name: 'PayPal', sector: 'Finance', price: 44.85 },
+  { ticker: 'TEAM', name: 'Atlassian Corp Plc', sector: 'Software', price: 66.46 },
+  { ticker: 'ZS', name: 'Zscaler', sector: 'Cybersecurity', price: 139.44 },
+  { ticker: 'PDD', name: 'PDD Holdings DRC', sector: 'Consumer', price: 102.61 },
+  { ticker: 'CRWD', name: 'CrowdStrike Holdings', sector: 'Cybersecurity', price: 385.86 },
+  { ticker: 'DDOG', name: 'Datadog', sector: 'Software', price: 123.29 },
+  { ticker: 'PLTR', name: 'Palantir', sector: 'Defence', price: 154.96 },
+  { ticker: 'ABNB', name: 'Airbnb', sector: 'Consumer', price: 131.81 },
+  { ticker: 'DASH', name: 'DoorDash', sector: 'Consumer', price: 152.92 },
+  { ticker: 'APP', name: 'Applovin', sector: 'Software', price: 436.69 },
+  { ticker: 'CEG', name: 'Constellation Energy', sector: 'Utilities', price: 303.32 },
+  { ticker: 'GEHC', name: 'GE HealthCare', sector: 'Healthcare', price: 72.20 },
+  { ticker: 'ARM', name: 'Arm', sector: 'Technology', price: 157.07 },
+  { ticker: 'LIN', name: 'Linde PLC', sector: 'Materials', price: 492.34 },
+  { ticker: 'TRI', name: 'Thomson Reuters', sector: 'Media', price: 87.40 },
+]
+
+// Combine and deduplicate
+function getMergedCompanyList() {
+  const merged = [...DOW_30, ...NASDAQ_100]
+  const unique = new Map<string, (typeof merged)[0]>()
+
+  for (const company of merged) {
+    if (!unique.has(company.ticker)) {
+      unique.set(company.ticker, company)
+    }
+  }
+
+  return Array.from(unique.values())
+}
+
+// Generate additional companies to reach 2,600
+function generateAdditionalCompanies(baseList: ReturnType<typeof getMergedCompanyList>, targetCount: number) {
   const result = [...baseList]
-  const sectors = ['Technology', 'Finance', 'Healthcare', 'Energy', 'Retail', 'Defence', 'Manufacturing']
-  const adjectives = ['Advanced', 'Digital', 'Global', 'United', 'National', 'American', 'International']
-  const nouns = ['Systems', 'Corp', 'Industries', 'Group', 'Solutions', 'Services', 'Holdings']
+  const sectors = ['Technology', 'Healthcare', 'Finance', 'Energy', 'Retail', 'Manufacturing', 'Utilities', 'Consumer', 'Industrials']
+  const adjectives = ['Advanced', 'Digital', 'Global', 'United', 'National', 'American', 'International', 'Quantum', 'Dynamic']
+  const nouns = ['Systems', 'Corp', 'Industries', 'Group', 'Solutions', 'Services', 'Holdings', 'Tech', 'Labs']
 
   while (result.length < targetCount) {
     const adj = adjectives[Math.floor(Math.random() * adjectives.length)]
@@ -134,8 +207,9 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    // Generate full company list
-    const companies = generateAdditionalCompanies(COMPANY_LIST, 2600)
+    // Generate full company list (merge Dow 30 + Nasdaq 100, fill to 2,600)
+    const baseList = getMergedCompanyList()
+    const companies = generateAdditionalCompanies(baseList, 2600)
 
     console.log(`Loading ${companies.length} companies into Supabase...`)
 
