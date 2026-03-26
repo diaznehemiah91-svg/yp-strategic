@@ -9,7 +9,9 @@ import FuturesPanel from './components/FuturesPanel';
 import MacroPanel from './components/MacroPanel';
 import GeoRiskPanel from './components/GeoRiskPanel';
 import ContractorGrid from './components/ContractorGrid';
-import GlobalIntelligenceDashboard from './components/GlobalIntelligenceDashboard';
+import dynamic from 'next/dynamic'
+
+const Globe3D = dynamic(() => import('./components/Globe3D'), { ssr: false })
 import NexusSection from './components/NexusSection';
 import PricingSection from './components/PricingSection';
 import AdSlot from './components/AdSlot';
@@ -172,8 +174,8 @@ export default async function Home() {
       </div>
 
       {/* ── GLOBAL INTELLIGENCE COMMAND CENTER ── */}
-      <div id="forge" className="w-full h-screen relative z-10">
-        <GlobalIntelligenceDashboard />
+      <div id="forge" className="w-full h-screen relative z-10 bg-[#000814]">
+        <Globe3D />
       </div>
 
       {/* ── NEXUS + PRICING + FOOTER ── */}

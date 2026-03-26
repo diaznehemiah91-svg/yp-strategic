@@ -11,3 +11,20 @@
  ✓ Ready in 2.1s
  ✓ Compiled /api/news in 417ms (38 modules)
  ✓ Compiled in 1379ms (190 modules)
+   Reload env: .env.local
+ ✓ Compiled in 1568ms (190 modules)
+ ✓ Compiled in 338ms (190 modules)
+ ✓ Compiled in 47ms (190 modules)
+ ✓ Compiled in 51ms (190 modules)
+ ✓ Compiled in 47ms (190 modules)
+ ✓ Compiled in 135ms (190 modules)
+ ✓ Compiled in 87ms (190 modules)
+ ✓ Compiled in 71ms (190 modules)
+ ✓ Compiled in 79ms (190 modules)
+ ✓ Compiled in 78ms (190 modules)
+ ✓ Compiled in 213ms (190 modules)
+ ✓ Compiled in 512ms (190 modules)
+   Reload env: .env.local
+ ✓ Compiled in 507ms (190 modules)
+ ✓ Compiled in 188ms (190 modules)
+ ✓ Compiled in 133ms (190 modules)
