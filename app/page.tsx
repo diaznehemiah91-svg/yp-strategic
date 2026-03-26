@@ -20,6 +20,7 @@ import SectorHeatmap from './components/SectorHeatmap';
 import CorrelationMatrix from './components/CorrelationMatrix';
 import SectorMomentum from './components/SectorMomentum';
 import NewsGlobe from './components/NewsGlobe';
+import SignalNotifications from './components/SignalNotifications';
 
 export const revalidate = 60;
 
@@ -35,6 +36,7 @@ export default async function Home() {
 
   return (
     <>
+      <SignalNotifications />
       <ThreeBackground />
 
       <div className="relative z-10 max-w-[1260px] mx-auto px-5 pt-6 pb-20">
