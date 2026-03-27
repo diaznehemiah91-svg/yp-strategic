@@ -1,663 +1,580 @@
 'use client'
 
-import React, { useEffect, useRef, useState } from 'react'
-import * as THREE from 'three'
-import { X, TrendingUp, AlertTriangle, MapPin } from 'lucide-react'
+import React, { useEffect, useRef, useState, useCallback } from 'react'
+import { TrendingUp, TrendingDown, Globe, Activity, Zap, BarChart3, ArrowUpRight, ArrowDownRight } from 'lucide-react'
 
-const COMPANY_DATA = [
-  {
-    ticker: 'LMT',
-    name: 'Lockheed Martin',
-    sector: 'Defence Primes',
-    hq: { city: 'Bethesda, MD', lat: 38.9816, lng: -77.1043, country: 'USA' },
-    marketCap: 215.5,
-    operations: [
-      { type: 'Manufacturing', location: 'Grand Prairie, TX', country: 'USA', employees: 2400 },
-      { type: 'R&D', location: 'Orlando, FL', country: 'USA', focus: 'Missiles & Defense' },
-      { type: 'Manufacturing', location: 'Fort Worth, TX', country: 'USA', employees: 3200 },
-    ],
-    supplyChain: [
-      { tier: 'Tier-1', company: 'Collins Aerospace', location: 'Connecticut', country: 'USA' },
-      { tier: 'Tier-2', company: 'TSMC', location: 'Taiwan', country: 'Taiwan', riskLevel: 'high' },
-    ],
-    govContracts: 127,
-    riskScore: 7.2,
-  },
-  {
-    ticker: 'RTX',
-    name: 'RTX Corporation',
-    sector: 'Defence Primes',
-    hq: { city: 'Arlington, VA', lat: 38.8816, lng: -77.0945, country: 'USA' },
-    marketCap: 278.3,
-    operations: [
-      { type: 'Manufacturing', location: 'Waltham, MA', country: 'USA', employees: 1800 },
-      { type: 'R&D', location: 'East Hartford, CT', country: 'USA', focus: 'Aerospace Systems' },
-    ],
-    supplyChain: [
-      { tier: 'Tier-1', company: 'Safran', location: 'France', country: 'France' },
-    ],
-    govContracts: 215,
-    riskScore: 6.1,
-  },
-  {
-    ticker: 'NOC',
-    name: 'Northrop Grumman',
-    sector: 'Defence Primes',
-    hq: { city: 'Falls Church, VA', lat: 38.8808, lng: -77.1513, country: 'USA' },
-    marketCap: 135.8,
-    operations: [
-      { type: 'Manufacturing', location: 'Melbourne, FL', country: 'USA', employees: 2100 },
-      { type: 'Space Systems', location: 'Redondo Beach, CA', country: 'USA', focus: 'Satellites' },
-    ],
-    supplyChain: [
-      { tier: 'Tier-1', company: 'DRS Technologies', location: 'New York', country: 'USA' },
-    ],
-    govContracts: 98,
-    riskScore: 5.8,
-  },
-  {
-    ticker: 'GD',
-    name: 'General Dynamics',
-    sector: 'Defence Primes',
-    hq: { city: 'Reston, VA', lat: 38.9586, lng: -77.3627, country: 'USA' },
-    marketCap: 95.2,
-    operations: [
-      { type: 'Combat Systems', location: 'Detroit, MI', country: 'USA', employees: 3100 },
-    ],
-    supplyChain: [],
-    govContracts: 156,
-    riskScore: 6.5,
-  },
-  {
-    ticker: 'BA',
-    name: 'Boeing',
-    sector: 'Defence Primes',
-    hq: { city: 'Arlington, VA', lat: 38.8870, lng: -77.0995, country: 'USA' },
-    marketCap: 198.7,
-    operations: [
-      { type: 'Commercial Aircraft', location: 'Seattle, WA', country: 'USA', employees: 28000 },
-      { type: 'Defence Space', location: 'Long Beach, CA', country: 'USA', employees: 6500 },
-    ],
-    supplyChain: [
-      { tier: 'Tier-1', company: 'Spirit AeroSystems', location: 'Oklahoma', country: 'USA' },
-      { tier: 'Tier-2', company: 'MTU Aero Engines', location: 'Germany', country: 'Germany' },
-    ],
-    govContracts: 187,
-    riskScore: 8.3,
-  },
-  {
-    ticker: 'PLTR',
-    name: 'Palantir Technologies',
-    sector: 'Defence IT',
-    hq: { city: 'Denver, CO', lat: 39.7392, lng: -104.9903, country: 'USA' },
-    marketCap: 64.2,
-    operations: [
-      { type: 'Software Development', location: 'Palo Alto, CA', country: 'USA' },
-      { type: 'Government', location: 'Washington, DC', country: 'USA' },
-    ],
-    supplyChain: [
-      { tier: 'Cloud', company: 'AWS', location: 'Multiple', country: 'USA' },
-    ],
-    govContracts: 42,
-    riskScore: 4.2,
-  },
-  {
-    ticker: 'NVDA',
-    name: 'NVIDIA',
-    sector: 'Semiconductors',
-    hq: { city: 'Santa Clara, CA', lat: 37.3687, lng: -121.9453, country: 'USA' },
-    marketCap: 1285.9,
-    operations: [
-      { type: 'Design', location: 'San Jose, CA', country: 'USA' },
-      { type: 'Fabless', location: 'Multiple', country: 'Taiwan', focus: 'TSMC Partnership' },
-    ],
-    supplyChain: [
-      { tier: 'Critical', company: 'TSMC', location: 'Taiwan', country: 'Taiwan', riskLevel: 'critical' },
-      { tier: 'Tier-1', company: 'Samsung', location: 'South Korea', country: 'South Korea' },
-    ],
-    govContracts: 18,
-    riskScore: 9.1,
-  },
-  {
-    ticker: 'CRWD',
-    name: 'CrowdStrike',
-    sector: 'Cybersecurity',
-    hq: { city: 'Austin, TX', lat: 30.2672, lng: -97.7431, country: 'USA' },
-    marketCap: 38.5,
-    operations: [
-      { type: 'Engineering', location: 'Sunnyvale, CA', country: 'USA' },
-    ],
-    supplyChain: [
-      { tier: 'Cloud', company: 'AWS', location: 'Global', country: 'USA' },
-    ],
-    govContracts: 23,
-    riskScore: 3.1,
-  },
-]
+const MARKET_HUBS = [
+  { name: 'New York', lat: 40.7128, lng: -74.006, country: 'USA', exchange: 'NYSE/NASDAQ', tickers: ['PLTR','NVDA','BA','LMT'], marketCap: '52.3T', volume: '12.8B', change: +1.24, color: '#00ff88' },
+  { name: 'London', lat: 51.5074, lng: -0.1278, country: 'UK', exchange: 'LSE', tickers: ['BAE','RYCEY'], marketCap: '3.2T', volume: '2.1B', change: -0.38, color: '#00ccff' },
+  { name: 'Tokyo', lat: 35.6762, lng: 139.6503, country: 'Japan', exchange: 'TSE', tickers: ['MHI','KHI'], marketCap: '6.1T', volume: '3.4B', change: +0.87, color: '#ff6600' },
+  { name: 'Shanghai', lat: 31.2304, lng: 121.4737, country: 'China', exchange: 'SSE', tickers: ['AVIC','CASIC'], marketCap: '7.8T', volume: '5.2B', change: -1.12, color: '#ff3366' },
+  { name: 'Frankfurt', lat: 50.1109, lng: 8.6821, country: 'Germany', exchange: 'FRA', tickers: ['AIR','RHM'], marketCap: '2.4T', volume: '1.3B', change: +0.56, color: '#9966ff' },
+  { name: 'Sydney', lat: -33.8688, lng: 151.2093, country: 'Australia', exchange: 'ASX', tickers: ['ASB','EOS'], marketCap: '1.8T', volume: '0.8B', change: +0.34, color: '#ffcc00' },
+  { name: 'Singapore', lat: 1.3521, lng: 103.8198, country: 'Singapore', exchange: 'SGX', tickers: ['STE'], marketCap: '0.7T', volume: '0.4B', change: -0.21, color: '#00ffcc' },
+  { name: 'Tel Aviv', lat: 32.0853, lng: 34.7818, country: 'Israel', exchange: 'TASE', tickers: ['ESLT','ELBIT'], marketCap: '0.3T', volume: '0.2B', change: +2.15, color: '#66ff66' },
+  { name: 'Seoul', lat: 37.5665, lng: 126.978, country: 'S.Korea', exchange: 'KRX', tickers: ['KAI','LIG'], marketCap: '2.1T', volume: '1.8B', change: +0.93, color: '#ff9966' },
+  { name: 'Mumbai', lat: 19.076, lng: 72.8777, country: 'India', exchange: 'BSE', tickers: ['HAL','BEL','BDL'], marketCap: '4.2T', volume: '2.6B', change: +1.67, color: '#ff66cc' },
+  { name: 'Toronto', lat: 43.6532, lng: -79.3832, country: 'Canada', exchange: 'TSX', tickers: ['CAE','MDA'], marketCap: '2.9T', volume: '1.1B', change: +0.45, color: '#66ccff' },
+  { name: 'Riyadh', lat: 24.7136, lng: 46.6753, country: 'Saudi', exchange: 'TADAWUL', tickers: ['SAMI','AEC'], marketCap: '2.7T', volume: '0.9B', change: -0.78, color: '#cc9900' },
+];
 
-const SECTOR_COLORS: Record<string, string> = {
-  'Defence Primes': '#1e40af',
-  'Defence IT': '#06b6d4',
-  Cybersecurity: '#dc2626',
-  Semiconductors: '#22c55e',
-  Space: '#a855f7',
-  Energy: '#f97316',
+const SECTOR_DATA = [
+  { name: 'Defence Primes', change: +2.4, color: '#00ff88' },
+  { name: 'Cybersecurity', change: +1.8, color: '#00ccff' },
+  { name: 'Semiconductors', change: -0.6, color: '#ff6600' },
+  { name: 'AI / ML', change: +3.1, color: '#9966ff' },
+  { name: 'Space & Launch', change: +1.2, color: '#ffcc00' },
+  { name: 'Nuclear', change: +0.9, color: '#ff3366' },
+  { name: 'Quantum', change: -1.3, color: '#ff66cc' },
+  { name: 'GovCloud', change: +0.7, color: '#66ccff' },
+];
+
+const TRADE_ROUTES = [
+  { from: 0, to: 1, intensity: 0.8 },
+  { from: 0, to: 2, intensity: 0.9 },
+  { from: 0, to: 4, intensity: 0.7 },
+  { from: 1, to: 4, intensity: 0.6 },
+  { from: 2, to: 3, intensity: 0.5 },
+  { from: 0, to: 8, intensity: 0.7 },
+  { from: 0, to: 9, intensity: 0.6 },
+  { from: 0, to: 7, intensity: 0.8 },
+  { from: 1, to: 6, intensity: 0.5 },
+  { from: 2, to: 5, intensity: 0.4 },
+  { from: 0, to: 10, intensity: 0.6 },
+  { from: 0, to: 11, intensity: 0.5 },
+];
+
+const CONTINENTS: [number,number][][][] = [
+  [[[-130,50],[-125,60],[-100,60],[-80,45],[-65,45],[-80,25],[-100,20],[-120,30],[-130,50]]],
+  [[[-80,10],[-60,10],[-35,-5],[-40,-20],[-55,-30],[-70,-55],[-75,-20],[-80,10]]],
+  [[[0,35],[10,35],[30,45],[40,55],[30,60],[10,55],[0,50],[-10,45],[0,35]]],
+  [[[-15,35],[10,35],[35,30],[50,10],[45,-10],[35,-35],[20,-35],[10,-5],[-15,5],[-15,35]]],
+  [[[40,55],[60,55],[80,50],[100,55],[120,55],[140,50],[130,30],[120,20],[100,10],[80,25],[60,25],[40,35],[40,55]]],
+  [[[115,-15],[130,-12],[150,-15],[155,-25],[150,-38],[130,-32],[115,-22],[115,-15]]],
+];
+
+function degToRad(d: number) { return d * Math.PI / 180; }
+
+interface ProjectionConfig {
+  rotateLambda: number;
+  rotatePhi: number;
+  scale: number;
+  cx: number;
+  cy: number;
 }
 
-const latLngToXYZ = (lat: number, lng: number, radius: number = 2.5) => {
-  const phi = (90 - lat) * (Math.PI / 180)
-  const theta = (lng + 180) * (Math.PI / 180)
-  const x = -(radius * Math.sin(phi) * Math.cos(theta))
-  const y = radius * Math.cos(phi)
-  const z = radius * Math.sin(phi) * Math.sin(theta)
-  return new THREE.Vector3(x, y, z)
+function orthoProject(lon: number, lat: number, cfg: ProjectionConfig): [number, number, boolean] {
+  const lambda = degToRad(lon + cfg.rotateLambda);
+  const phi = degToRad(lat);
+  const cosPhi = Math.cos(phi);
+  const x = cosPhi * Math.sin(lambda);
+  const y = -Math.sin(phi);
+  const z = cosPhi * Math.cos(lambda);
+  const rotPhi = degToRad(cfg.rotatePhi);
+  const y2 = y * Math.cos(rotPhi) - z * Math.sin(rotPhi);
+  const z2 = y * Math.sin(rotPhi) + z * Math.cos(rotPhi);
+  const visible = z2 > -0.1;
+  return [cfg.cx + x * cfg.scale, cfg.cy + y2 * cfg.scale, visible];
+}
+
+function projectPoint(lon: number, lat: number, cfg: ProjectionConfig): { x: number; y: number; visible: boolean } {
+  const [px, py, visible] = orthoProject(lon, lat, cfg);
+  return { x: px, y: py, visible };
+}
+
+function drawGlobe(
+  ctx: CanvasRenderingContext2D, width: number, height: number,
+  rotation: number, tilt: number, time: number, hoveredHub: number | null, dpr: number
+) {
+  const cx = width / 2;
+  const cy = height / 2;
+  const radius = Math.min(width, height) * 0.32;
+  const cfg: ProjectionConfig = { rotateLambda: rotation, rotatePhi: tilt, scale: radius, cx, cy };
+
+  ctx.clearRect(0, 0, width * dpr, height * dpr);
+  ctx.save();
+  ctx.scale(dpr, dpr);
+
+  // Atmosphere glow
+  const atmosGrad = ctx.createRadialGradient(cx, cy, radius * 0.9, cx, cy, radius * 1.5);
+  atmosGrad.addColorStop(0, 'rgba(0, 255, 136, 0.08)');
+  atmosGrad.addColorStop(0.4, 'rgba(0, 200, 255, 0.04)');
+  atmosGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+  ctx.fillStyle = atmosGrad;
+  ctx.fillRect(0, 0, width, height);
+
+  // Globe sphere
+  const globeGrad = ctx.createRadialGradient(cx - radius * 0.3, cy - radius * 0.3, 0, cx, cy, radius);
+  globeGrad.addColorStop(0, 'rgba(15, 25, 40, 0.95)');
+  globeGrad.addColorStop(0.7, 'rgba(5, 15, 30, 0.98)');
+  globeGrad.addColorStop(1, 'rgba(0, 8, 20, 1)');
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+  ctx.fillStyle = globeGrad;
+  ctx.fill();
+
+  // Atmosphere ring
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+  const ringGrad = ctx.createRadialGradient(cx, cy, radius - 2, cx, cy, radius + 4);
+  ringGrad.addColorStop(0, 'rgba(0, 255, 136, 0.3)');
+  ringGrad.addColorStop(1, 'rgba(0, 255, 136, 0)');
+  ctx.strokeStyle = ringGrad;
+  ctx.lineWidth = 3;
+  ctx.stroke();
+
+  // Graticule
+  ctx.strokeStyle = 'rgba(0, 255, 136, 0.06)';
+  ctx.lineWidth = 0.5;
+  for (let lat = -80; lat <= 80; lat += 20) {
+    ctx.beginPath();
+    let started = false;
+    for (let lon = -180; lon <= 180; lon += 3) {
+      const p = projectPoint(lon, lat, cfg);
+      if (p.visible) { if (!started) { ctx.moveTo(p.x, p.y); started = true; } else ctx.lineTo(p.x, p.y); }
+      else { started = false; }
+    }
+    ctx.stroke();
+  }
+  for (let lon = -180; lon < 180; lon += 20) {
+    ctx.beginPath();
+    let started = false;
+    for (let lat = -90; lat <= 90; lat += 3) {
+      const p = projectPoint(lon, lat, cfg);
+      if (p.visible) { if (!started) { ctx.moveTo(p.x, p.y); started = true; } else ctx.lineTo(p.x, p.y); }
+      else { started = false; }
+    }
+    ctx.stroke();
+  }
+
+  // Continents
+  CONTINENTS.forEach(continent => {
+    continent.forEach(ring => {
+      ctx.beginPath();
+      let started = false;
+      ring.forEach(([lon, lat]) => {
+        const p = projectPoint(lon, lat, cfg);
+        if (p.visible) { if (!started) { ctx.moveTo(p.x, p.y); started = true; } else ctx.lineTo(p.x, p.y); }
+      });
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(0, 255, 136, 0.08)';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(0, 255, 136, 0.25)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    });
+  });
+
+  // Trade route arcs
+  TRADE_ROUTES.forEach(route => {
+    const fromHub = MARKET_HUBS[route.from];
+    const toHub = MARKET_HUBS[route.to];
+    const p1 = projectPoint(fromHub.lng, fromHub.lat, cfg);
+    const p2 = projectPoint(toHub.lng, toHub.lat, cfg);
+    if (p1.visible && p2.visible) {
+      const midX = (p1.x + p2.x) / 2;
+      const midY = (p1.y + p2.y) / 2 - 30 * route.intensity;
+      ctx.beginPath();
+      ctx.moveTo(p1.x, p1.y);
+      ctx.quadraticCurveTo(midX, midY, p2.x, p2.y);
+      const pulse = 0.3 + 0.3 * Math.sin(time * 0.002 + route.from);
+      ctx.strokeStyle = `rgba(0, 255, 136, ${pulse * route.intensity * 0.4})`;
+      ctx.lineWidth = 1;
+      ctx.setLineDash([4, 6]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      const t = ((time * 0.001 + route.from * 0.5) % 1);
+      const px = p1.x * (1 - t) * (1 - t) + 2 * midX * t * (1 - t) + p2.x * t * t;
+      const py = p1.y * (1 - t) * (1 - t) + 2 * midY * t * (1 - t) + p2.y * t * t;
+      ctx.beginPath();
+      ctx.arc(px, py, 2, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(0, 255, 200, 0.8)';
+      ctx.fill();
+    }
+  });
+
+  // Market hub dots
+  MARKET_HUBS.forEach((hub, i) => {
+    const p = projectPoint(hub.lng, hub.lat, cfg);
+    if (!p.visible) return;
+    const isHovered = hoveredHub === i;
+    const pulseSize = 3 + 1.5 * Math.sin(time * 0.003 + i);
+    const baseSize = isHovered ? 7 : pulseSize;
+    const glowGrad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, baseSize * 4);
+    glowGrad.addColorStop(0, hub.color + '60');
+    glowGrad.addColorStop(1, hub.color + '00');
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, baseSize * 4, 0, Math.PI * 2);
+    ctx.fillStyle = glowGrad;
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, baseSize, 0, Math.PI * 2);
+    ctx.fillStyle = hub.color;
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, baseSize * 0.4, 0, Math.PI * 2);
+    ctx.fillStyle = '#ffffff';
+    ctx.fill();
+    const ringPhase = (time * 0.002 + i * 0.7) % 1;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, baseSize + ringPhase * 15, 0, Math.PI * 2);
+    ctx.strokeStyle = hub.color + Math.floor((1 - ringPhase) * 80).toString(16).padStart(2, '0');
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  });
+
+  // Orbital rings with ticker data
+  for (let ring = 0; ring < 3; ring++) {
+    const ringRadius = radius * (1.15 + ring * 0.12);
+    const ringSpeed = 0.0003 * (ring + 1);
+    const ringAlpha = 0.15 - ring * 0.03;
+    const ringTilt = 15 + ring * 25;
+    ctx.beginPath();
+    for (let angle = 0; angle < 360; angle += 2) {
+      const a = degToRad(angle + time * ringSpeed * 180 / Math.PI);
+      const tiltRad = degToRad(ringTilt);
+      const x = cx + ringRadius * Math.cos(a);
+      const y = cy + ringRadius * Math.sin(a) * Math.cos(tiltRad);
+      if (angle === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    const ringColors = ['#00ff88', '#00ccff', '#9966ff'];
+    ctx.strokeStyle = ringColors[ring] + Math.floor(ringAlpha * 255).toString(16).padStart(2, '0');
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    const tickerSets = [
+      ['PLTR +3.2%', 'NVDA -0.8%', 'BA +1.9%', 'LMT +0.7%', 'RTX +1.1%', 'NOC -0.4%'],
+      ['BTC +1.4%', 'ETH +2.2%', '/ES +0.8%', '/NQ +1.1%', 'GLD +0.4%', '/CL -0.9%'],
+      ['SPY +0.6%', 'QQQ +0.9%', 'IWM -0.3%', 'DIA +0.4%', 'VIX -2.1%', 'TLT +0.8%'],
+    ];
+    const tickers = tickerSets[ring];
+    tickers.forEach((ticker, ti) => {
+      const a = degToRad((ti / tickers.length) * 360 + time * ringSpeed * 180 / Math.PI);
+      const tiltRad = degToRad(ringTilt);
+      const tx = cx + ringRadius * Math.cos(a);
+      const ty = cy + ringRadius * Math.sin(a) * Math.cos(tiltRad);
+      const tz = ringRadius * Math.sin(a) * Math.sin(tiltRad);
+      if (tz > -ringRadius * 0.3) {
+        const opacity = Math.min(1, (tz + ringRadius * 0.3) / (ringRadius * 0.6));
+        ctx.font = '600 9px monospace';
+        ctx.fillStyle = `rgba(255,255,255,${opacity * 0.7})`;
+        ctx.textAlign = 'center';
+        ctx.fillText(ticker, tx, ty - 6);
+      }
+    });
+  }
+
+  // Floating data cards
+  MARKET_HUBS.forEach((hub, i) => {
+    const p = projectPoint(hub.lng, hub.lat, cfg);
+    if (!p.visible || hoveredHub === i) return;
+    const showPhase = Math.sin(time * 0.001 + i * 1.5);
+    if (showPhase < 0.5) return;
+    const cardX = p.x + 12;
+    const cardY = p.y - 18;
+    const alpha = (showPhase - 0.5) * 2;
+    ctx.save();
+    ctx.globalAlpha = alpha * 0.85;
+    const cardW = 62;
+    const cardH = 22;
+    ctx.fillStyle = 'rgba(0, 10, 20, 0.85)';
+    ctx.strokeStyle = hub.color + '60';
+    ctx.lineWidth = 0.5;
+    ctx.beginPath();
+    ctx.roundRect(cardX, cardY, cardW, cardH, 3);
+    ctx.fill();
+    ctx.stroke();
+    ctx.font = '600 7px monospace';
+    ctx.fillStyle = hub.color;
+    ctx.textAlign = 'left';
+    ctx.fillText(hub.exchange.substring(0, 6), cardX + 4, cardY + 9);
+    const changeColor = hub.change >= 0 ? '#00ff88' : '#ff4444';
+    ctx.fillStyle = changeColor;
+    ctx.font = '700 8px monospace';
+    ctx.fillText((hub.change >= 0 ? '+' : '') + hub.change.toFixed(1) + '%', cardX + 4, cardY + 18);
+    ctx.restore();
+  });
+
+  // AI Powered Analytics label
+  const baseY = cy + radius + 45;
+  ctx.font = '600 10px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = 'rgba(0, 255, 136, 0.5)';
+  ctx.fillText('AI  POWERED  ANALYTICS', cx, baseY);
+
+  // Scanning line
+  const scanY = cy - radius + ((time * 0.05) % (radius * 2));
+  if (scanY >= cy - radius && scanY <= cy + radius) {
+    const scanWidth = Math.sqrt(radius * radius - (scanY - cy) * (scanY - cy)) * 2;
+    const scanGrad = ctx.createLinearGradient(cx - scanWidth / 2, scanY, cx + scanWidth / 2, scanY);
+    scanGrad.addColorStop(0, 'rgba(0, 255, 136, 0)');
+    scanGrad.addColorStop(0.5, 'rgba(0, 255, 136, 0.08)');
+    scanGrad.addColorStop(1, 'rgba(0, 255, 136, 0)');
+    ctx.fillStyle = scanGrad;
+    ctx.fillRect(cx - scanWidth / 2, scanY - 1, scanWidth, 2);
+  }
+
+  ctx.restore();
 }
 
 export default function GlobalStockGlobe() {
-  const containerRef = useRef<HTMLDivElement>(null)
-  const sceneRef = useRef<THREE.Scene | null>(null)
-  const rendererRef = useRef<THREE.WebGLRenderer | null>(null)
-  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null)
-  const globeRef = useRef<THREE.Group | null>(null)
-  const pinsRef = useRef<Map<string, THREE.Object3D>>(new Map())
-  const raycasterRef = useRef(new THREE.Raycaster())
-  const mouseRef = useRef(new THREE.Vector2())
-
-  const [selectedCompany, setSelectedCompany] = useState<(typeof COMPANY_DATA)[0] | null>(null)
-  const [hoveredTicker, setHoveredTicker] = useState<string | null>(null)
-  const [stockPrices, setStockPrices] = useState<Record<string, { price: number; change: number }>>({})
-  const [isDragging, setIsDragging] = useState(false)
-  const dragStartRef = useRef({ x: 0, y: 0 })
-  const rotationRef = useRef({ x: 0, y: 0 })
-  const targetRotationRef = useRef({ x: 0, y: 0 })
-
-  // Fetch stock prices
-  useEffect(() => {
-    const fetchPrices = async () => {
-      try {
-        const response = await fetch('/api/stocks')
-        const data = await response.json()
-        const priceMap: Record<string, { price: number; change: number }> = {}
-        data.forEach((stock: any) => {
-          priceMap[stock.ticker] = {
-            price: stock.price,
-            change: stock.change,
-          }
-        })
-        setStockPrices(priceMap)
-      } catch (error) {
-        console.error('Failed to fetch stock prices:', error)
-      }
-    }
-
-    fetchPrices()
-    const interval = setInterval(fetchPrices, 5000)
-    return () => clearInterval(interval)
-  }, [])
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const animRef = useRef<number>(0);
+  const rotationRef = useRef(0);
+  const [hoveredHub, setHoveredHub] = useState<number | null>(null);
+  const [selectedHub, setSelectedHub] = useState<number | null>(null);
+  const [isVisible, setIsVisible] = useState(false);
+  const [globalIndex, setGlobalIndex] = useState({ value: 7847.32, change: +1.24 });
+  const containerRef = useRef<HTMLDivElement>(null);
+  const isDragging = useRef(false);
+  const lastMouseX = useRef(0);
+  const dragRotation = useRef(0);
 
   useEffect(() => {
-    const container = containerRef.current
-    if (!container) return
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsVisible(entry.isIntersecting),
+      { threshold: 0.1 }
+    );
+    if (containerRef.current) observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []);
 
-    // Scene Setup
-    const scene = new THREE.Scene()
-    sceneRef.current = scene
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setGlobalIndex(prev => {
+        const delta = (Math.random() - 0.48) * 5;
+        const newVal = prev.value + delta;
+        return { value: newVal, change: prev.change + (Math.random() - 0.5) * 0.1 };
+      });
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
 
-    const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000)
-    camera.position.z = 6
-    cameraRef.current = camera
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    isDragging.current = true;
+    lastMouseX.current = e.clientX;
+  }, []);
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
-    renderer.setSize(container.clientWidth, container.clientHeight)
-    renderer.setPixelRatio(window.devicePixelRatio)
-    container.appendChild(renderer.domElement)
-    rendererRef.current = renderer
-
-    // Lighting
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5)
-    scene.add(ambientLight)
-
-    const pointLight = new THREE.PointLight(0x00d4ff, 1)
-    pointLight.position.set(4, 4, 4)
-    scene.add(pointLight)
-
-    // Globe Group
-    const globeGroup = new THREE.Group()
-    globeRef.current = globeGroup
-    scene.add(globeGroup)
-
-    // Create Globe
-    const globeGeom = new THREE.SphereGeometry(2.5, 128, 128)
-    const globeMat = new THREE.MeshPhongMaterial({
-      color: 0x0a1628,
-      emissive: 0x001a3d,
-      wireframe: false,
-      shininess: 10,
-    })
-    const globe = new THREE.Mesh(globeGeom, globeMat)
-    globeGroup.add(globe)
-
-    // Wireframe overlay
-    const wireframeGeom = new THREE.SphereGeometry(2.52, 64, 64)
-    const wireframeMat = new THREE.LineBasicMaterial({
-      color: 0x00d4ff,
-      transparent: true,
-      opacity: 0.06,
-    })
-    const wireframeLines = new THREE.LineSegments(
-      new THREE.WireframeGeometry(wireframeGeom),
-      wireframeMat
-    )
-    globeGroup.add(wireframeLines)
-
-    // Atmospheric glow
-    const glowGeom = new THREE.SphereGeometry(2.6, 64, 64)
-    const glowMat = new THREE.MeshBasicMaterial({
-      color: 0x0099ff,
-      transparent: true,
-      opacity: 0.08,
-      side: THREE.BackSide,
-    })
-    const glow = new THREE.Mesh(glowGeom, glowMat)
-    globeGroup.add(glow)
-
-    // Create company pins
-    COMPANY_DATA.forEach((company, index) => {
-      const pos = latLngToXYZ(company.hq.lat, company.hq.lng)
-
-      const pinGroup = new THREE.Group()
-      pinGroup.position.copy(pos)
-      pinGroup.userData = {
-        company,
-        ticker: company.ticker,
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (isDragging.current) {
+      const dx = e.clientX - lastMouseX.current;
+      dragRotation.current += dx * 0.3;
+      lastMouseX.current = e.clientX;
+    }
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+    const w = rect.width;
+    const h = rect.height;
+    const radius = Math.min(w, h) * 0.32;
+    const totalRotation = rotationRef.current + dragRotation.current;
+    const cfg: ProjectionConfig = { rotateLambda: totalRotation, rotatePhi: -15, scale: radius, cx: w / 2, cy: h / 2 };
+    let found = -1;
+    MARKET_HUBS.forEach((hub, i) => {
+      const p = projectPoint(hub.lng, hub.lat, cfg);
+      if (p.visible) {
+        const dist = Math.sqrt((mx - p.x) ** 2 + (my - p.y) ** 2);
+        if (dist < 20) found = i;
       }
+    });
+    setHoveredHub(found >= 0 ? found : null);
+  }, []);
 
-      // Bubble size based on market cap (normalized)
-      const bubbleScale = Math.min(0.08 + (company.marketCap / 500) * 0.1, 0.25)
+  const handleMouseUp = useCallback(() => { isDragging.current = false; }, []);
 
-      // Pin sphere
-      const pinGeom = new THREE.SphereGeometry(bubbleScale, 20, 20)
-      const pinColor = SECTOR_COLORS[company.sector] || '#00d4ff'
-      const pinMat = new THREE.MeshStandardMaterial({
-        color: pinColor,
-        emissive: pinColor,
-        emissiveIntensity: 0.6,
-        metalness: 0.7,
-        roughness: 0.2,
-      })
-      const pinMesh = new THREE.Mesh(pinGeom, pinMat)
-      pinGroup.add(pinMesh)
+  const handleClick = useCallback(() => {
+    if (hoveredHub !== null) setSelectedHub(hoveredHub === selectedHub ? null : hoveredHub);
+    else setSelectedHub(null);
+  }, [hoveredHub, selectedHub]);
 
-      // Pulsing ring
-      const ringGeom = new THREE.TorusGeometry(bubbleScale * 1.8, bubbleScale * 0.15, 16, 32)
-      const ringMat = new THREE.MeshBasicMaterial({
-        color: pinColor,
-        transparent: true,
-        opacity: 0.5,
-      })
-      const ring = new THREE.Mesh(ringGeom, ringMat)
-      pinGroup.add(ring)
-
-      pinGroup.userData.pulseRing = ring
-      pinGroup.userData.bubbleScale = bubbleScale
-      pinGroup.scale.set(0, 0, 0)
-
-      globeGroup.add(pinGroup)
-      pinsRef.current.set(company.ticker, pinGroup)
-
-      // Animate appearance
-      setTimeout(() => {
-        const startTime = Date.now()
-        const duration = 400
-        const animate = () => {
-          const elapsed = Date.now() - startTime
-          const progress = Math.min(elapsed / duration, 1)
-          pinGroup.scale.set(progress, progress, progress)
-          if (progress < 1) requestAnimationFrame(animate)
-        }
-        animate()
-      }, index * 40)
-
-      // Create supply chain pins
-      company.supplyChain.forEach((supplier) => {
-        // Simulate supply chain location (would use real coordinates in production)
-        const offsetLat = company.hq.lat + (Math.random() - 0.5) * 15
-        const offsetLng = company.hq.lng + (Math.random() - 0.5) * 15
-        const supPos = latLngToXYZ(offsetLat, offsetLng)
-
-        const supGeom = new THREE.SphereGeometry(bubbleScale * 0.5, 12, 12)
-        const supColor = supplier.riskLevel === 'critical' ? '#dc2626' : supplier.riskLevel === 'high' ? '#f97316' : '#fbbf24'
-        const supMat = new THREE.MeshStandardMaterial({
-          color: supColor,
-          emissive: supColor,
-          emissiveIntensity: 0.4,
-          transparent: true,
-          opacity: 0.6,
-        })
-        const supPin = new THREE.Mesh(supGeom, supMat)
-        supPin.position.copy(supPos)
-        supPin.userData = {
-          company,
-          isSupplier: true,
-          supplier: supplier.company,
-        }
-        globeGroup.add(supPin)
-      })
-    })
-
-    // Background stars
-    const starCount = 500
-    const starGeom = new THREE.BufferGeometry()
-    const starPositions = new Float32Array(starCount * 3)
-    for (let i = 0; i < starCount * 3; i += 3) {
-      starPositions[i] = (Math.random() - 0.5) * 50
-      starPositions[i + 1] = (Math.random() - 0.5) * 50
-      starPositions[i + 2] = (Math.random() - 0.5) * 50
-    }
-    starGeom.setAttribute('position', new THREE.BufferAttribute(starPositions, 3))
-    const starMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.08, sizeAttenuation: true })
-    const stars = new THREE.Points(starGeom, starMat)
-    scene.add(stars)
-
-    // Animation Loop
-    let animationId: number
-    const animate = () => {
-      animationId = requestAnimationFrame(animate)
-
-      if (!isDragging) {
-        targetRotationRef.current.y += 0.0002
-      }
-
-      rotationRef.current.x += (targetRotationRef.current.x - rotationRef.current.x) * 0.1
-      rotationRef.current.y += (targetRotationRef.current.y - rotationRef.current.y) * 0.1
-
-      if (globeGroup) {
-        globeGroup.rotation.x = rotationRef.current.x
-        globeGroup.rotation.y = rotationRef.current.y
-      }
-
-      // Animate pins with stock performance
-      pinsRef.current.forEach((pin, ticker) => {
-        const price = stockPrices[ticker]
-        if (pin.userData.pulseRing) {
-          const time = Date.now() * 0.003
-          const pulse = 0.7 + Math.sin(time) * 0.4
-          pin.userData.pulseRing.scale.set(pulse, pulse, 1)
-
-          // Color change based on stock performance
-          if (price && price.change > 0) {
-            pin.userData.pulseRing.material.color.set(0x22c55e) // Green
-          } else if (price && price.change < 0) {
-            pin.userData.pulseRing.material.color.set(0xdc2626) // Red
-          }
-        }
-
-        // Scale bubble based on trading activity (simulated)
-        if (hoveredTicker === ticker) {
-          pin.scale.lerp(new THREE.Vector3(1.2, 1.2, 1.2), 0.1)
-        } else {
-          pin.scale.lerp(new THREE.Vector3(1, 1, 1), 0.1)
-        }
-      })
-
-      renderer.render(scene, camera)
-    }
-    animate()
-
-    // Mouse interactions
-    const onMouseDown = (e: MouseEvent) => {
-      setIsDragging(true)
-      dragStartRef.current = { x: e.clientX, y: e.clientY }
-    }
-
-    const onMouseMove = (e: MouseEvent) => {
-      mouseRef.current.x = (e.clientX / window.innerWidth) * 2 - 1
-      mouseRef.current.y = -(e.clientY / window.innerHeight) * 2 + 1
-
-      if (isDragging) {
-        const deltaX = e.clientX - dragStartRef.current.x
-        const deltaY = e.clientY - dragStartRef.current.y
-        targetRotationRef.current.y += deltaX * 0.01
-        targetRotationRef.current.x += deltaY * 0.01
-        dragStartRef.current = { x: e.clientX, y: e.clientY }
-      } else {
-        raycasterRef.current.setFromCamera(mouseRef.current, camera)
-        const pins = Array.from(pinsRef.current.values())
-        const intersects = raycasterRef.current.intersectObjects(pins, true)
-
-        if (intersects.length > 0) {
-          const pin = intersects[0].object.parent as THREE.Object3D
-          setHoveredTicker(pin.userData?.ticker || null)
-        } else {
-          setHoveredTicker(null)
-        }
-      }
-    }
-
-    const onMouseUp = () => {
-      setIsDragging(false)
-    }
-
-    const onClick = (e: MouseEvent) => {
-      mouseRef.current.x = (e.clientX / window.innerWidth) * 2 - 1
-      mouseRef.current.y = -(e.clientY / window.innerHeight) * 2 + 1
-
-      raycasterRef.current.setFromCamera(mouseRef.current, camera)
-      const pins = Array.from(pinsRef.current.values())
-      const intersects = raycasterRef.current.intersectObjects(pins, true)
-
-      if (intersects.length > 0) {
-        const pin = intersects[0].object.parent as THREE.Object3D
-        const company = pin.userData?.company
-        if (company) {
-          setSelectedCompany(company)
-        }
-      }
-    }
-
-    container.addEventListener('mousedown', onMouseDown)
-    window.addEventListener('mousemove', onMouseMove)
-    window.addEventListener('mouseup', onMouseUp)
-    container.addEventListener('click', onClick)
-
-    const handleResize = () => {
-      const width = container.clientWidth
-      const height = container.clientHeight
-      camera.aspect = width / height
-      camera.updateProjectionMatrix()
-      renderer.setSize(width, height)
-    }
-    window.addEventListener('resize', handleResize)
-
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || !isVisible) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    const dpr = window.devicePixelRatio || 1;
+    const resize = () => {
+      const parent = canvas.parentElement;
+      if (!parent) return;
+      const w = parent.clientWidth;
+      const h = parent.clientHeight;
+      canvas.width = w * dpr;
+      canvas.height = h * dpr;
+      canvas.style.width = w + 'px';
+      canvas.style.height = h + 'px';
+    };
+    resize();
+    window.addEventListener('resize', resize);
+    let startTime = performance.now();
+    const animate = (time: number) => {
+      const elapsed = time - startTime;
+      const w = canvas.width / dpr;
+      const h = canvas.height / dpr;
+      rotationRef.current = elapsed * 0.008;
+      const totalRotation = rotationRef.current + dragRotation.current;
+      drawGlobe(ctx, w, h, totalRotation, -15, elapsed, hoveredHub, dpr);
+      animRef.current = requestAnimationFrame(animate);
+    };
+    animRef.current = requestAnimationFrame(animate);
     return () => {
-      cancelAnimationFrame(animationId)
-      container.removeEventListener('mousedown', onMouseDown)
-      window.removeEventListener('mousemove', onMouseMove)
-      window.removeEventListener('mouseup', onMouseUp)
-      container.removeEventListener('click', onClick)
-      window.removeEventListener('resize', handleResize)
-      renderer.dispose()
-      container.removeChild(renderer.domElement)
-    }
-  }, [isDragging, hoveredTicker, stockPrices])
+      cancelAnimationFrame(animRef.current);
+      window.removeEventListener('resize', resize);
+    };
+  }, [isVisible, hoveredHub]);
 
-  const getStockColor = (change: number) => {
-    return change > 0 ? '#22c55e' : change < 0 ? '#dc2626' : '#94a3b8'
-  }
+  const hub = selectedHub !== null ? MARKET_HUBS[selectedHub] : null;
 
   return (
-    <>
-      {/* Section Header */}
-      <div className="mb-4 fade-up d6">
-        <div className="font-mono text-[10px] tracking-[3px] uppercase text-[var(--accent)] flex items-center gap-2">
-          <span className="w-6 h-px bg-[var(--accent)]" />◆ Global Stock Intelligence Globe
+    <section ref={containerRef} className="relative w-full py-12 overflow-hidden" style={{ background: 'linear-gradient(180deg, rgba(0,5,10,1) 0%, rgba(0,10,20,1) 50%, rgba(0,5,10,1) 100%)' }}>
+      <div className="text-center mb-4 px-4">
+        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/5 mb-3">
+          <Globe className="w-3.5 h-3.5 text-emerald-400" />
+          <span className="text-[10px] font-mono tracking-[0.2em] text-emerald-400 uppercase">Global Intelligence Network</span>
         </div>
+        <h2 className="text-2xl md:text-3xl font-bold text-white mb-1">
+          Global Stock <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">Intelligence</span>
+        </h2>
+        <p className="text-xs text-gray-500 font-mono">Real-time defence-tech market analysis across 12 global exchanges</p>
       </div>
 
-      {/* Stats Bar */}
-      <div className="glass mb-4 p-4 fade-up d6">
-        <div className="font-mono text-[9px] uppercase tracking-widest text-[var(--text-dim)]">
-          {COMPANY_DATA.length} Companies Tracked · {COMPANY_DATA.reduce((acc, c) => acc + c.operations.length, 0)} Global Operations · Risk Score System Active
-        </div>
-      </div>
-
-      {/* 3D Globe */}
-      <div
-        ref={containerRef}
-        className="relative w-full bg-black rounded-lg border border-[var(--border)] mb-7 overflow-hidden cursor-grab active:cursor-grabbing"
-        style={{ height: '70vh', perspective: '1200px' }}
-      />
-
-      {/* Hover Tooltip */}
-      {hoveredTicker && stockPrices[hoveredTicker] && (
-        <div className="fixed bottom-4 left-4 glass p-4 rounded border border-[var(--border)] z-20 font-mono text-[10px]">
-          <div className="text-white font-bold mb-2">{hoveredTicker}</div>
+      <div className="flex justify-center mb-4 px-4">
+        <div className="inline-flex items-center gap-4 px-4 py-2 rounded-lg bg-black/40 border border-emerald-500/10">
           <div className="flex items-center gap-2">
-            <span className="text-[var(--text-dim)]">$</span>
-            <span className="text-white">{stockPrices[hoveredTicker].price.toFixed(2)}</span>
-            <span className={getStockColor(stockPrices[hoveredTicker].change)}>
-              {stockPrices[hoveredTicker].change > 0 ? '+' : ''}{stockPrices[hoveredTicker].change.toFixed(2)}%
-            </span>
+            <Activity className="w-3.5 h-3.5 text-emerald-400" />
+            <span className="text-[10px] font-mono text-gray-400">GLOBAL DEFENCE INDEX</span>
           </div>
-          <div className="text-[var(--text-dim)] mt-2">Click for details</div>
+          <span className="text-sm font-bold text-white font-mono">{globalIndex.value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+          <span className={`text-xs font-mono font-bold ${globalIndex.change >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+            {globalIndex.change >= 0 ? '+' : ''}{globalIndex.change.toFixed(2)}%
+          </span>
+          <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
         </div>
-      )}
+      </div>
 
-      {/* Detail Panel */}
-      {selectedCompany && (
-        <div className="fixed right-0 top-0 h-screen w-[420px] glass border-l border-[var(--border)] overflow-y-auto z-30 shadow-[0_0_50px_rgba(0,255,80,0.1)]">
-          <div className="sticky top-0 bg-black/80 backdrop-blur p-6 border-b border-[var(--border)]">
-            <div className="flex items-start justify-between">
-              <div>
-                <div className="font-mono text-2xl font-black text-white">{selectedCompany.ticker}</div>
-                <div className="font-mono text-xs text-[var(--text-dim)]">{selectedCompany.name}</div>
-              </div>
-              <button
-                onClick={() => setSelectedCompany(null)}
-                className="text-[var(--text-dim)] hover:text-[var(--accent)] transition-colors"
-              >
-                <X size={20} />
-              </button>
+      <div className="relative max-w-7xl mx-auto px-4">
+        <div className="grid grid-cols-1 lg:grid-cols-[200px_1fr_200px] gap-4 items-start">
+          <div className="hidden lg:block space-y-1.5">
+            <div className="flex items-center gap-2 mb-2">
+              <BarChart3 className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="text-[10px] font-mono tracking-wider text-emerald-400 uppercase">Sector Performance</span>
             </div>
+            {SECTOR_DATA.map((sector, i) => (
+              <div key={i} className="flex items-center justify-between px-2.5 py-1.5 rounded bg-white/[0.02] border border-white/[0.04] hover:border-emerald-500/20 transition-colors">
+                <span className="text-[10px] font-mono text-gray-400">{sector.name}</span>
+                <span className={`text-[10px] font-mono font-bold ${sector.change >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                  {sector.change >= 0 ? '+' : ''}{sector.change}%
+                </span>
+              </div>
+            ))}
+          </div>
 
-            {/* Stock Price */}
-            {stockPrices[selectedCompany.ticker] && (
-              <div className="mt-4 pt-4 border-t border-[var(--border)]">
-                <div className="flex items-baseline gap-3">
-                  <div className="font-mono text-xl font-bold text-white">
-                    ${stockPrices[selectedCompany.ticker].price.toFixed(2)}
-                  </div>
-                  <div
-                    className="font-mono text-sm font-bold flex items-center gap-1"
-                    style={{ color: getStockColor(stockPrices[selectedCompany.ticker].change) }}
-                  >
-                    <TrendingUp size={14} />
-                    {stockPrices[selectedCompany.ticker].change > 0 ? '+' : ''}
-                    {stockPrices[selectedCompany.ticker].change.toFixed(2)}%
-                  </div>
+          <div className="relative" style={{ minHeight: 420 }}>
+            <canvas ref={canvasRef} className="w-full cursor-grab active:cursor-grabbing" style={{ height: 420 }}
+              onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp}
+              onMouseLeave={() => { isDragging.current = false; setHoveredHub(null); }} onClick={handleClick} />
+            {hoveredHub !== null && (
+              <div className="absolute pointer-events-none z-20 px-3 py-2 rounded-lg bg-black/90 border border-emerald-500/30 backdrop-blur-sm"
+                   style={{ left: '50%', top: '50%', transform: 'translate(-50%, -120%)' }}>
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="w-2 h-2 rounded-full" style={{ background: MARKET_HUBS[hoveredHub].color }} />
+                  <span className="text-xs font-bold text-white">{MARKET_HUBS[hoveredHub].name}</span>
+                  <span className="text-[9px] text-gray-500 font-mono">{MARKET_HUBS[hoveredHub].exchange}</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-[10px] text-gray-400 font-mono">MCap: {MARKET_HUBS[hoveredHub].marketCap}</span>
+                  <span className={`text-[10px] font-mono font-bold ${MARKET_HUBS[hoveredHub].change >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                    {MARKET_HUBS[hoveredHub].change >= 0 ? '+' : ''}{MARKET_HUBS[hoveredHub].change}%
+                  </span>
                 </div>
               </div>
             )}
           </div>
 
-          <div className="p-6 space-y-6">
-            {/* Headquarters */}
-            <div>
-              <div className="font-mono text-[9px] text-[var(--accent)] uppercase tracking-widest mb-3 flex items-center gap-2">
-                <MapPin size={12} />◆ Headquarters
-              </div>
-              <div className="font-mono text-[10px]">
-                <div className="text-white font-bold">{selectedCompany.hq.city}</div>
-                <div className="text-[var(--text-dim)]">{selectedCompany.hq.country}</div>
-                <div className="text-[var(--text-dim)] text-[9px] mt-1">
-                  {selectedCompany.hq.lat.toFixed(4)}°, {selectedCompany.hq.lng.toFixed(4)}°
-                </div>
-              </div>
+          <div className="hidden lg:block space-y-1.5">
+            <div className="flex items-center gap-2 mb-2">
+              <Zap className="w-3.5 h-3.5 text-cyan-400" />
+              <span className="text-[10px] font-mono tracking-wider text-cyan-400 uppercase">Signal Feed</span>
             </div>
-
-            {/* Key Metrics */}
-            <div>
-              <div className="font-mono text-[9px] text-[var(--accent)] uppercase tracking-widest mb-3">◆ Key Metrics</div>
-              <div className="grid grid-cols-2 gap-4 font-mono text-[10px]">
-                <div className="bg-[rgba(0,0,0,0.3)] p-3 rounded border border-[var(--border)]">
-                  <div className="text-[var(--text-dim)]">Market Cap</div>
-                  <div className="text-white font-bold">${selectedCompany.marketCap}B</div>
+            {MARKET_HUBS.slice(0, 8).map((hub, i) => (
+              <div key={i}
+                   className={`flex items-center justify-between px-2.5 py-1.5 rounded border transition-all cursor-pointer ${selectedHub === i ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-white/[0.02] border-white/[0.04] hover:border-cyan-500/20'}`}
+                   onClick={() => setSelectedHub(selectedHub === i ? null : i)}>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-1.5 h-1.5 rounded-full" style={{ background: hub.color }} />
+                  <span className="text-[10px] font-mono text-gray-300">{hub.name}</span>
                 </div>
-                <div className="bg-[rgba(0,0,0,0.3)] p-3 rounded border border-[var(--border)]">
-                  <div className="text-[var(--text-dim)]">Gov Contracts</div>
-                  <div className="text-white font-bold">{selectedCompany.govContracts}</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Geopolitical Risk */}
-            <div>
-              <div className="font-mono text-[9px] text-[var(--accent)] uppercase tracking-widest mb-3 flex items-center gap-2">
-                <AlertTriangle size={12} />◆ Risk Assessment
-              </div>
-              <div className="relative h-2 bg-[rgba(0,0,0,0.3)] rounded overflow-hidden border border-[var(--border)]">
-                <div
-                  className="h-full bg-gradient-to-r from-[#22c55e] to-[#dc2626]"
-                  style={{ width: `${(selectedCompany.riskScore / 10) * 100}%` }}
-                />
-              </div>
-              <div className="font-mono text-[9px] text-[var(--text-dim)] mt-2 flex justify-between">
-                <span>Geopolitical Risk</span>
-                <span className="text-white font-bold">{selectedCompany.riskScore}/10</span>
-              </div>
-            </div>
-
-            {/* Operations */}
-            <div>
-              <div className="font-mono text-[9px] text-[var(--accent)] uppercase tracking-widest mb-3">
-                ◆ Operations ({selectedCompany.operations.length})
-              </div>
-              <div className="space-y-2">
-                {selectedCompany.operations.map((op: any, i) => (
-                  <div key={i} className="bg-[rgba(0,0,0,0.3)] p-3 rounded border border-[var(--border)] font-mono text-[9px]">
-                    <div className="text-white font-bold">{op.type}</div>
-                    <div className="text-[var(--text-dim)]">{op.location}, {op.country}</div>
-                    {op.employees && <div className="text-[var(--accent2)]">{op.employees.toLocaleString()} employees</div>}
-                    {op.focus && <div className="text-[var(--accent)]">{op.focus}</div>}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Supply Chain */}
-            {selectedCompany.supplyChain.length > 0 && (
-              <div>
-                <div className="font-mono text-[9px] text-[var(--accent)] uppercase tracking-widest mb-3">
-                  ◆ Supply Chain ({selectedCompany.supplyChain.length})
-                </div>
-                <div className="space-y-2">
-                  {selectedCompany.supplyChain.map((supplier, i) => (
-                    <div key={i} className="bg-[rgba(0,0,0,0.3)] p-3 rounded border border-[var(--border)] font-mono text-[9px]">
-                      <div className="text-white font-bold">{supplier.company}</div>
-                      <div className="text-[var(--text-dim)]">{supplier.location}, {supplier.country}</div>
-                      {supplier.riskLevel && (
-                        <div
-                          className="text-[9px] font-bold mt-1"
-                          style={{
-                            color:
-                              supplier.riskLevel === 'critical'
-                                ? '#dc2626'
-                                : supplier.riskLevel === 'high'
-                                  ? '#f97316'
-                                  : '#22c55e',
-                          }}
-                        >
-                          {supplier.riskLevel.toUpperCase()} RISK
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                <div className="flex items-center gap-1">
+                  {hub.change >= 0 ? <ArrowUpRight className="w-2.5 h-2.5 text-emerald-400" /> : <ArrowDownRight className="w-2.5 h-2.5 text-red-400" />}
+                  <span className={`text-[10px] font-mono font-bold ${hub.change >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                    {hub.change >= 0 ? '+' : ''}{hub.change.toFixed(1)}%
+                  </span>
                 </div>
               </div>
-            )}
+            ))}
           </div>
         </div>
-      )}
-    </>
-  )
+
+        {hub && (
+          <div className="mt-4 mx-auto max-w-2xl p-4 rounded-xl bg-black/50 border border-emerald-500/20 backdrop-blur-sm">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-3">
+                <div className="w-3 h-3 rounded-full" style={{ background: hub.color }} />
+                <div>
+                  <h3 className="text-sm font-bold text-white">{hub.name} \u2014 {hub.exchange}</h3>
+                  <p className="text-[10px] text-gray-500 font-mono">{hub.country}</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className={`text-lg font-bold font-mono ${hub.change >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                  {hub.change >= 0 ? '+' : ''}{hub.change}%
+                </div>
+                <div className="text-[10px] text-gray-500 font-mono">Vol: {hub.volume}</div>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+              <div className="px-2.5 py-2 rounded bg-white/[0.03] border border-white/[0.06]">
+                <div className="text-[9px] text-gray-500 font-mono mb-0.5">Market Cap</div>
+                <div className="text-xs font-bold text-white font-mono">{hub.marketCap}</div>
+              </div>
+              <div className="px-2.5 py-2 rounded bg-white/[0.03] border border-white/[0.06]">
+                <div className="text-[9px] text-gray-500 font-mono mb-0.5">Volume</div>
+                <div className="text-xs font-bold text-white font-mono">{hub.volume}</div>
+              </div>
+              <div className="px-2.5 py-2 rounded bg-white/[0.03] border border-white/[0.06]">
+                <div className="text-[9px] text-gray-500 font-mono mb-0.5">Key Tickers</div>
+                <div className="text-xs font-bold text-emerald-400 font-mono">{hub.tickers.join(', ')}</div>
+              </div>
+              <div className="px-2.5 py-2 rounded bg-white/[0.03] border border-white/[0.06]">
+                <div className="text-[9px] text-gray-500 font-mono mb-0.5">Exchange</div>
+                <div className="text-xs font-bold text-cyan-400 font-mono">{hub.exchange}</div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="lg:hidden mt-4 px-4">
+        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+          {SECTOR_DATA.map((sector, i) => (
+            <div key={i} className="flex-shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.03] border border-white/[0.06]">
+              <div className="w-1.5 h-1.5 rounded-full" style={{ background: sector.color }} />
+              <span className="text-[10px] font-mono text-gray-400 whitespace-nowrap">{sector.name}</span>
+              <span className={`text-[10px] font-mono font-bold ${sector.change >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                {sector.change >= 0 ? '+' : ''}{sector.change}%
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="absolute top-0 left-0 w-24 h-24 border-l border-t border-emerald-500/10" />
+      <div className="absolute top-0 right-0 w-24 h-24 border-r border-t border-emerald-500/10" />
+      <div className="absolute bottom-0 left-0 w-24 h-24 border-l border-b border-emerald-500/10" />
+      <div className="absolute bottom-0 right-0 w-24 h-24 border-r border-b border-emerald-500/10" />
+    </section>
+  );
 }
