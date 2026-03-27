@@ -8,6 +8,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
+// Guard against missing Supabase environment variables at build time
+if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY) {
+    // Return a module that doesn't require Supabase during build
+    const { NextRequest, NextResponse } = require('next/server');
+    module.exports.POST = async (request: NextRequest) => {
+          return NextResponse.json({ error: 'Supabase not configured' }, { status: 503 });
+    };
+    // Exit early - don't try to create Supabase client
+    module.exports.default = async (request: NextRequest) => {
+          return NextResponse.json({ error: 'Supabase not configured' }, { status: 503 });
+    };
+}
+
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY!
