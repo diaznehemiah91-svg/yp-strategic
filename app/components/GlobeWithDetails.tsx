@@ -1,5 +1,2 @@
 'use client';
-
-export default function GlobeWithDetails() {
-      return null;
-}
+export { default } from './GlobalStockGlobe';
