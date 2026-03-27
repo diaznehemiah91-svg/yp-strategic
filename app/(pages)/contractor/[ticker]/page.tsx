@@ -23,14 +23,160 @@ export default async function ContractorPage({ params }: { params: { ticker: str
   // Filter signals relevant to this ticker
   // Sector-based signal filtering for broader coverage
   const sectorMap: Record<string, string[]> = {
-    'DEFENCE': ['LMT','RTX','NOC','GD','BA','HII','LDOS','SAIC','BAH','DRS','KTOS','MRCY'],
-    'CYBER': ['CRWD','PANW','FTNT','ZS','NET','S','DDOG'],
-    'SEMIS': ['NVDA','AMD','AVGO','INTC','TSM','ASML','MRVL','KLAC','LRCX'],
-    'SPACE': ['RKLB','RDW','ASTS','MNTS','LUNR','SPR'],
-    'QUANTUM': ['IONQ','RGTI','QUBT','QBTS'],
-    'NUCLEAR': ['OKLO','SMR','CEG','VST','NNE','LEU','BWXT'],
-    'AI': ['PLTR','NVDA','AXON','DDOG'],
-  };
+
+  // ── ORIGINAL THEMATIC BUCKETS (preserved + expanded) ──────────────────────
+
+  'DEFENCE': [
+    'LMT','RTX','NOC','GD','BA','HII','LDOS','SAIC','BAH','DRS','KTOS','MRCY',
+    // S&P 500 Aerospace & Defense additions
+    'LHX','TXT','HWM','GE','TDG'
+  ],
+
+  'CYBER': [
+    'CRWD','PANW','FTNT','ZS','NET','S','DDOG',
+    // S&P 500 Systems Software additions
+    'MSFT','NOW','GEN'
+  ],
+
+  'SEMIS': [
+    'NVDA','AMD','AVGO','INTC','TSM','ASML','MRVL','KLAC','LRCX',
+    // S&P 500 Semiconductors
+    'ADI','MCHP','MU','MPWR','NXPI','ON','QCOM','SWKS','TXN','FSLR',
+    // S&P 500 Semiconductor Materials & Equipment
+    'AMAT','Q','TER',
+    // NASDAQ-100 additions
+    'ARM'
+  ],
+
+  'SPACE': [
+    'RKLB','RDW','ASTS','MNTS','LUNR','SPR'
+  ],
+
+  'QUANTUM': [
+    'IONQ','RGTI','QUBT','QBTS'
+  ],
+
+  'NUCLEAR': [
+    'OKLO','SMR','CEG','VST','NNE','LEU','BWXT',
+    // S&P 500 Electric Utilities with nuclear exposure
+    'NEE','DUK','SO','EXC','PEG','D','ETR','PPL','FE','EIX'
+  ],
+
+  'AI': [
+    'PLTR','NVDA','AXON','DDOG',
+    // S&P 500 AI-adjacent: hyperscalers, software, data infra
+    'MSFT','GOOGL','GOOG','META','AMZN','CRM','ADBE','SNPS','CDNS','NOW','IBM','ORCL',
+    // NASDAQ-100
+    'MELI','BIDU'
+  ],
+
+  // ── S&P 500 / NASDAQ-100 GICS SECTORS ─────────────────────────────────────
+
+  'INFORMATION_TECHNOLOGY': [
+    // Application Software
+    'ADBE','APP','ADSK','CDNS','DDOG','FICO','INTU','ORCL','PLTR','PTC','CRM','SNPS','TYL','WDAY',
+    // Systems Software
+    'CRWD','FTNT','GEN','MSFT','PANW','NOW',
+    // IT Consulting & Other Services
+    'ACN','CTSH','EPAM','IT','IBM',
+    // Semiconductors
+    'AMD','ADI','AVGO','FSLR','INTC','MCHP','MU','MPWR','NVDA','NXPI','ON','QCOM','SWKS','TXN',
+    // Semiconductor Materials & Equipment
+    'AMAT','KLAC','LRCX','Q','TER',
+    // Technology Hardware, Storage & Peripherals
+    'AAPL','DELL','HPE','HPQ','NTAP','SNDK','STX','SMCI','WDC',
+    // Communications Equipment
+    'ANET','CIEN','CSCO','FFIV','LITE','MSI',
+    // Internet Services & Infrastructure
+    'AKAM','GDDY','VRSN',
+    // Electronic Components
+    'APH','COHR','GLW',
+    // Electronic Equipment & Instruments
+    'KEYS','ROP','TDY','TRMB','ZBRA',
+    // Electronic Manufacturing Services
+    'JBL','TEL',
+    // Technology Distributors
+    'CDW',
+    // NASDAQ-100 additions not in S&P 500
+    'ARM','ASML','ANSS','TEAM','MRVL','ZS','MDB','ENPH','SIRI'
+  ],
+
+  'COMMUNICATION_SERVICES': [
+    'GOOGL','GOOG','T','CHTR','CMCSA','SATS','EA','FOXA','FOX','LYV','META',
+    'NFLX','NWSA','NWS','OMC','PSKY','TMUS','TTWO','TKO','TTD','VZ','DIS','WBD',
+    // NASDAQ-100 additions
+    'BIDU','MTCH','WBA'
+  ],
+
+  'CONSUMER_DISCRETIONARY': [
+    'ABNB','AMZN','APTV','AZO','BBY','BKNG','CCL','CVNA','CMG','DRI','DECK','DPZ',
+    'DASH','DHI','EBAY','EXPE','F','GRMN','GM','GPC','HAS','HLT','HD','LVS','LEN',
+    'LOW','LULU','MAR','MCD','MGM','NKE','NCLH','NVR','ORLY','POOL','PHM','RL',
+    'ROST','RCL','SBUX','TPR','TSLA','TJX','TSCO','ULTA','WSM','WYNN','YUM',
+    // NASDAQ-100 additions
+    'MELI','PDD','TCOM'
+  ],
+
+  'CONSUMER_STAPLES': [
+    'MO','ADM','BF.B','BG','CPB','CHD','CLX','KO','CL','CAG','STZ','COST','DG',
+    'DLTR','EL','GIS','HSY','HRL','KVUE','KDP','KMB','KHC','KR','MKC','TAP',
+    'MDLZ','MNST','PEP','PM','PG','SJM','SYY','TGT','TSN','WMT'
+  ],
+
+  'HEALTH_CARE': [
+    'ABT','ABBV','A','ALGN','AMGN','BAX','BDX','TECH','BIIB','BSX','BMY','CAH',
+    'COR','CNC','CRL','CI','COO','CVS','DHR','DVA','DXCM','EW','ELV','GEHC',
+    'GILD','HCA','HSIC','HOLX','HUM','IDXX','INCY','PODD','ISRG','IQV','JNJ',
+    'LH','LLY','MCK','MDT','MRK','MTD','MRNA','PFE','DGX','REGN','RMD','RVTY',
+    'SOLV','STE','SYK','TMO','UNH','UHS','VRTX','VTRS','WAT','WST','ZBH','ZTS',
+    // NASDAQ-100 additions
+    'ALNY','AZN','BMRN','ILMN'
+  ],
+
+  'FINANCIALS': [
+    'AFL','ALL','AXP','AIG','AMP','AON','APO','ACGL','ARES','AJG','AIZ','BAC',
+    'BRK.B','BLK','BX','XYZ','BK','BRO','COF','CBOE','SCHW','CB','CINF','C',
+    'CFG','CME','COIN','CPAY','ERIE','EG','FDS','FIS','FITB','FISV','BEN','GPN',
+    'GL','GS','HIG','HBAN','IBKR','ICE','IVZ','JKHY','JPM','KEY','KKR','L',
+    'MTB','MRSH','MA','MET','MCO','MS','MSCI','NDAQ','NTRS','PYPL','PNC','PFG',
+    'PGR','PRU','RJF','RF','HOOD','SPGI','STT','SYF','TROW','TRV','TFC','USB',
+    'V','WRB','WFC','WTW'
+  ],
+
+  'INDUSTRIALS': [
+    'MMM','AOS','ALLE','AME','ADP','AXON','BA','BR','BLDR','CHRW','CARR','CAT',
+    'CTAS','FIX','CPRT','CSX','CMI','DE','DAL','DOV','ETN','EME','EMR','EFX',
+    'EXPD','FAST','FDX','FTV','GE','GEV','GNRC','GD','HON','HWM','HUBB','HII',
+    'IEX','ITW','IR','JBHT','J','JCI','LHX','LDOS','LII','LMT','MAS','NDSN',
+    'NSC','NOC','ODFL','OTIS','PCAR','PH','PAYX','PNR','PWR','RTX','RSG','ROK',
+    'ROL','SNA','LUV','SWK','TXT','TT','TDG','UBER','UNP','UAL','UPS','URI',
+    'VLTO','VRSK','VRT','GWW','WAB','WM','XYL'
+  ],
+
+  'UTILITIES': [
+    'AES','LNT','AEE','AEP','AWK','ATO','CNP','CMS','ED','CEG','D','DTE','DUK',
+    'EIX','ETR','EVRG','ES','EXC','FE','NEE','NI','NRG','PCG','PNW','PPL','PEG',
+    'SRE','SO','VST','WEC','XEL'
+  ],
+
+  'ENERGY': [
+    'APA','BKR','CVX','COP','CTRA','DVN','FANG','EOG','EQT','EXE','XOM','HAL',
+    'KMI','MPC','OXY','OKE','PSX','SLB','TRGP','TPL','VLO','WMB'
+  ],
+
+  'MATERIALS': [
+    'APD','ALB','AMCR','AVY','BALL','CF','CTVA','CRH','DOW','DD','ECL','FCX',
+    'IFF','IP','LIN','LYB','MLM','MOS','NEM','NUE','PKG','PPG','SHW','SW',
+    'STLD','VMC'
+  ],
+
+  'REAL_ESTATE': [
+    'ARE','AMT','AVB','BXP','CPT','CBRE','CSGP','CCI','DLR','EQIX','EQR','ESS',
+    'EXR','FRT','DOC','HST','INVH','IRM','KIM','MAA','PLD','PSA','O','REG',
+    'SBAC','SPG','UDR','VTR','VICI','WELL','WY'
+  ],
+
+};
   const sectorTickers = Object.values(sectorMap).find(arr => arr.includes(ticker)) || [];
   const directSignals = allSignals.filter(s => s.tickers.includes(ticker));
   const sectorSignals = allSignals.filter(s =>
