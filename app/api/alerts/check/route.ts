@@ -3,10 +3,11 @@ import { createClient } from '@supabase/supabase-js'
 import { sendSms, formatAlertMessage } from '@/app/lib/twilio'
 
 export const maxDuration = 60
+export const dynamic = 'force-dynamic'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY!
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
 // Fetch current price from Yahoo Finance
