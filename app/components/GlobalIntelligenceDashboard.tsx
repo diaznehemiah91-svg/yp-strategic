@@ -424,4 +424,4 @@ export default function GlobalIntelligenceDashboard() {
               </div>
         </div>
       )
-}</div>
+}
