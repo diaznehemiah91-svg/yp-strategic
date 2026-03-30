@@ -305,7 +305,7 @@ export default function GlobalIntelligenceDashboard() {
               <div className="absolute left-4 top-20 w-80 glass p-4 rounded border border-[var(--border)] max-h-[500px] overflow-y-auto z-20 pointer-events-auto">
                       <div className="font-mono text-[10px] text-[var(--accent)] uppercase tracking-widest mb-4">
                                 Defence Intelligence - Live Prices
-                      </div>div>
+                      </div>
                       <div className="space-y-2">
                         {stocks.map((stock) => {
                       const changeColor = stock.change >= 0 ? 'text-[#22c55e]' : 'text-[#dc2626]'
@@ -316,25 +316,25 @@ export default function GlobalIntelligenceDashboard() {
                                                                       onClick={() => setSelectedStock(stock)}
                                                                     >
                                                                     <div className="flex justify-between items-center">
-                                                                                      <div className="font-mono text-[10px] text-white font-bold">{stock.ticker}</div>div>
+                                                                                      <div className="font-mono text-[10px] text-white font-bold">{stock.ticker}</div>
                                                                                       <div className={'font-mono text-[10px] ' + changeColor}>
                                                                                         {stock.price > 0 ? ('$' + stock.price.toFixed(2)) : 'Loading...'}
-                                                                                        </div>div>
-                                                                    </div>div>
-                                                                    <div className="font-mono text-[9px] text-[var(--text-dim)]">{stock.name}</div>div>
+                                                                                        </div>
+                                                                    </div>
+                                                                    <div className="font-mono text-[9px] text-[var(--text-dim)]">{stock.name}</div>
                                                       {stock.price > 0 && (
                                                                                         <div className={'font-mono text-[9px] ' + changeColor}>
                                                                                           {stock.change >= 0 ? '+' : ''}{stock.change.toFixed(2)}%
-                                                                                          </div>div>
+                                                                                          </div>
                                                                     )}
-                                                    </div>div>
+                                                    </div>
                                                   )
                         })}
-                      </div>div>
+                      </div>
               
                       <div className="font-mono text-[10px] text-[var(--accent)] uppercase tracking-widest mt-4 mb-3">
                                 Global Defence Correlations
-                      </div>div>
+                      </div>
                       <div className="space-y-3">
                         {[
           { pair: 'LMT RTX', corr: 84.0 },
@@ -343,45 +343,45 @@ export default function GlobalIntelligenceDashboard() {
           { pair: 'CRWD RTX', corr: 65.2 },
                     ].map((item) => (
                                   <div key={item.pair} className="bg-[rgba(0,0,0,0.3)] p-2 rounded border border-[var(--border)]">
-                                                <div className="font-mono text-[9px] text-white font-bold">{item.pair}</div>div>
-                                                <div className="font-mono text-[9px] text-[var(--accent)]">{item.corr.toFixed(1)}% correlation</div>div>
-                                  </div>div>
+                                                <div className="font-mono text-[9px] text-white font-bold">{item.pair}</div>
+                                                <div className="font-mono text-[9px] text-[var(--accent)]">{item.corr.toFixed(1)}% correlation</div>
+                                  </div>
                                 ))}
-                      </div>div>
-              </div>div>
+                      </div>
+              </div>
         
               <div className="absolute right-4 top-20 w-80 glass p-4 rounded border border-[var(--border)] max-h-[500px] overflow-y-auto z-20 pointer-events-auto">
                       <div className="mb-6">
                                 <div className="font-mono text-[10px] text-[var(--accent)] uppercase tracking-widest mb-3">
                                             Crypto Markets
-                                </div>div>
+                                </div>
                                 <div className="space-y-2">
                                   {cryptoData.map((crypto) => (
                         <div key={crypto.symbol} className="flex justify-between items-center font-mono text-[10px]">
-                                        <span className="text-white">{crypto.symbol}</span>span>
+                                        <span className="text-white">{crypto.symbol}</span>
                                         <span className={crypto.change > 0 ? 'text-[#22c55e]' : 'text-[#dc2626]'}>
                                           {crypto.change > 0 ? '+' : ''}{crypto.change.toFixed(2)}%
-                                        </span>span>
-                        </div>div>
+                                        </span>
+                        </div>
                       ))}
-                                </div>div>
-                      </div>div>
+                                </div>
+                      </div>
                       <div className="border-t border-[var(--border)] pt-4">
                                 <div className="font-mono text-[10px] text-[var(--accent)] uppercase tracking-widest mb-3">
                                             Futures
-                                </div>div>
+                                </div>
                                 <div className="space-y-2">
                                   {futuresData.map((future) => (
                         <div key={future.symbol} className="flex justify-between items-center font-mono text-[10px]">
-                                        <span className="text-white">/{future.symbol}</span>span>
+                                        <span className="text-white">/{future.symbol}</span>
                                         <span className={future.change > 0 ? 'text-[#22c55e]' : 'text-[#dc2626]'}>
                                           {future.change > 0 ? '+' : ''}{future.change.toFixed(2)}%
-                                        </span>span>
-                        </div>div>
+                                        </span>
+                        </div>
                       ))}
-                                </div>div>
-                      </div>div>
-              </div>div>
+                                </div>
+                      </div>
+              </div>
         
           {RISK_ZONES.map((zone) => {
                   const borderColor = zone.severity === 'CRITICAL' ? '#ff0055' : '#ff8800'
@@ -390,38 +390,38 @@ export default function GlobalIntelligenceDashboard() {
                                                   <div key={zone.name} className="absolute top-4 right-4 glass p-4 rounded border-2 z-20 pointer-events-auto" style={{ borderColor }}>
                                                               <div className="flex items-center gap-2 mb-2">
                                                                             <AlertTriangle size={18} style={{ color: textColor }} />
-                                                                            <div className="font-mono text-[10px] font-bold" style={{ color: textColor }}>{zone.severity} ALERT</div>div>
-                                                              </div>div>
-                                                              <div className="font-mono text-[9px] text-white mb-1">{zone.event}</div>div>
-                                                              <div className="font-mono text-[9px] text-[var(--text-dim)]">Risk: {zone.risk}/10</div>div>
-                                                              <div className="font-mono text-[9px] text-[var(--accent)] mt-2">Affecting: {zone.companies.join(', ')}</div>div>
-                                                  </div>div>
+                                                                            <div className="font-mono text-[10px] font-bold" style={{ color: textColor }}>{zone.severity} ALERT</div>
+                                                              </div>
+                                                              <div className="font-mono text-[9px] text-white mb-1">{zone.event}</div>
+                                                              <div className="font-mono text-[9px] text-[var(--text-dim)]">Risk: {zone.risk}/10</div>
+                                                              <div className="font-mono text-[9px] text-[var(--accent)] mt-2">Affecting: {zone.companies.join(', ')}</div>
+                                                  </div>
                                                 )
           })}
         
           {selectedStock && (
                   <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 glass p-6 rounded border border-[var(--accent)] z-30 pointer-events-auto min-w-[250px]">
-                            <button className="absolute top-2 right-2 text-[var(--text-dim)] font-mono text-[10px]" onClick={() => setSelectedStock(null)}>X</button>button>
-                            <div className="font-mono text-[12px] text-[var(--accent)] font-bold mb-1">{selectedStock.ticker}</div>div>
-                            <div className="font-mono text-[10px] text-white mb-2">{selectedStock.name}</div>div>
+                            <button className="absolute top-2 right-2 text-[var(--text-dim)] font-mono text-[10px]" onClick={() => setSelectedStock(null)}>X</button>
+                            <div className="font-mono text-[12px] text-[var(--accent)] font-bold mb-1">{selectedStock.ticker}</div>
+                            <div className="font-mono text-[10px] text-white mb-2">{selectedStock.name}</div>
                             <div className="font-mono text-[14px] text-white font-bold">
                               {selectedStock.price > 0 ? ('$' + selectedStock.price.toFixed(2)) : 'Loading...'}
-                            </div>div>
+                            </div>
                     {selectedStock.price > 0 && (
                                 <div className={selectedStock.change >= 0 ? 'text-[#22c55e] font-mono text-[11px]' : 'text-[#dc2626] font-mono text-[11px]'}>
                                   {selectedStock.change >= 0 ? '+' : ''}{selectedStock.change.toFixed(2)}%
-                                </div>div>
+                                </div>
                             )}
-                  </div>div>
+                  </div>
               )}
         
               <div className="absolute bottom-4 left-1/2 -translate-x-1/2 glass p-4 rounded border border-[var(--border)] z-20 font-mono text-[9px] pointer-events-auto">
                       <div className="text-[var(--accent)] flex items-center gap-2 mb-2">
                                 <Zap size={14} />
                                 Risk Score System Active - 6 Geopolitical Zones - 847 Signal Events / 24h
-                      </div>div>
-                      <div className="text-[var(--text-dim)]">Latency: 12ms - Sources: SEC - DARPA - USASpending - Finnhub</div>div>
-              </div>div>
-        </div>div>
+                      </div>
+                      <div className="text-[var(--text-dim)]">Latency: 12ms - Sources: SEC - DARPA - USASpending - Finnhub</div>
+              </div>
+        </div>
       )
 }</div>
