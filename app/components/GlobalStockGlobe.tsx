@@ -1,663 +1,636 @@
 'use client'
 
-import React, { useEffect, useRef, useState } from 'react'
+import { Canvas, useFrame, useThree, ThreeEvent } from '@react-three/fiber'
+import { OrbitControls, Line, Html, Text } from '@react-three/drei'
 import * as THREE from 'three'
-import { X, TrendingUp, AlertTriangle, MapPin } from 'lucide-react'
+import { geoInterpolate } from 'd3-geo'
+import { useMemo, useRef, useState, useCallback, useEffect } from 'react'
+import { Globe, Activity, Zap, BarChart3, ArrowUpRight, ArrowDownRight } from 'lucide-react'
 
-const COMPANY_DATA = [
-  {
-    ticker: 'LMT',
-    name: 'Lockheed Martin',
-    sector: 'Defence Primes',
-    hq: { city: 'Bethesda, MD', lat: 38.9816, lng: -77.1043, country: 'USA' },
-    marketCap: 215.5,
-    operations: [
-      { type: 'Manufacturing', location: 'Grand Prairie, TX', country: 'USA', employees: 2400 },
-      { type: 'R&D', location: 'Orlando, FL', country: 'USA', focus: 'Missiles & Defense' },
-      { type: 'Manufacturing', location: 'Fort Worth, TX', country: 'USA', employees: 3200 },
-    ],
-    supplyChain: [
-      { tier: 'Tier-1', company: 'Collins Aerospace', location: 'Connecticut', country: 'USA' },
-      { tier: 'Tier-2', company: 'TSMC', location: 'Taiwan', country: 'Taiwan', riskLevel: 'high' },
-    ],
-    govContracts: 127,
-    riskScore: 7.2,
-  },
-  {
-    ticker: 'RTX',
-    name: 'RTX Corporation',
-    sector: 'Defence Primes',
-    hq: { city: 'Arlington, VA', lat: 38.8816, lng: -77.0945, country: 'USA' },
-    marketCap: 278.3,
-    operations: [
-      { type: 'Manufacturing', location: 'Waltham, MA', country: 'USA', employees: 1800 },
-      { type: 'R&D', location: 'East Hartford, CT', country: 'USA', focus: 'Aerospace Systems' },
-    ],
-    supplyChain: [
-      { tier: 'Tier-1', company: 'Safran', location: 'France', country: 'France' },
-    ],
-    govContracts: 215,
-    riskScore: 6.1,
-  },
-  {
-    ticker: 'NOC',
-    name: 'Northrop Grumman',
-    sector: 'Defence Primes',
-    hq: { city: 'Falls Church, VA', lat: 38.8808, lng: -77.1513, country: 'USA' },
-    marketCap: 135.8,
-    operations: [
-      { type: 'Manufacturing', location: 'Melbourne, FL', country: 'USA', employees: 2100 },
-      { type: 'Space Systems', location: 'Redondo Beach, CA', country: 'USA', focus: 'Satellites' },
-    ],
-    supplyChain: [
-      { tier: 'Tier-1', company: 'DRS Technologies', location: 'New York', country: 'USA' },
-    ],
-    govContracts: 98,
-    riskScore: 5.8,
-  },
-  {
-    ticker: 'GD',
-    name: 'General Dynamics',
-    sector: 'Defence Primes',
-    hq: { city: 'Reston, VA', lat: 38.9586, lng: -77.3627, country: 'USA' },
-    marketCap: 95.2,
-    operations: [
-      { type: 'Combat Systems', location: 'Detroit, MI', country: 'USA', employees: 3100 },
-    ],
-    supplyChain: [],
-    govContracts: 156,
-    riskScore: 6.5,
-  },
-  {
-    ticker: 'BA',
-    name: 'Boeing',
-    sector: 'Defence Primes',
-    hq: { city: 'Arlington, VA', lat: 38.8870, lng: -77.0995, country: 'USA' },
-    marketCap: 198.7,
-    operations: [
-      { type: 'Commercial Aircraft', location: 'Seattle, WA', country: 'USA', employees: 28000 },
-      { type: 'Defence Space', location: 'Long Beach, CA', country: 'USA', employees: 6500 },
-    ],
-    supplyChain: [
-      { tier: 'Tier-1', company: 'Spirit AeroSystems', location: 'Oklahoma', country: 'USA' },
-      { tier: 'Tier-2', company: 'MTU Aero Engines', location: 'Germany', country: 'Germany' },
-    ],
-    govContracts: 187,
-    riskScore: 8.3,
-  },
-  {
-    ticker: 'PLTR',
-    name: 'Palantir Technologies',
-    sector: 'Defence IT',
-    hq: { city: 'Denver, CO', lat: 39.7392, lng: -104.9903, country: 'USA' },
-    marketCap: 64.2,
-    operations: [
-      { type: 'Software Development', location: 'Palo Alto, CA', country: 'USA' },
-      { type: 'Government', location: 'Washington, DC', country: 'USA' },
-    ],
-    supplyChain: [
-      { tier: 'Cloud', company: 'AWS', location: 'Multiple', country: 'USA' },
-    ],
-    govContracts: 42,
-    riskScore: 4.2,
-  },
-  {
-    ticker: 'NVDA',
-    name: 'NVIDIA',
-    sector: 'Semiconductors',
-    hq: { city: 'Santa Clara, CA', lat: 37.3687, lng: -121.9453, country: 'USA' },
-    marketCap: 1285.9,
-    operations: [
-      { type: 'Design', location: 'San Jose, CA', country: 'USA' },
-      { type: 'Fabless', location: 'Multiple', country: 'Taiwan', focus: 'TSMC Partnership' },
-    ],
-    supplyChain: [
-      { tier: 'Critical', company: 'TSMC', location: 'Taiwan', country: 'Taiwan', riskLevel: 'critical' },
-      { tier: 'Tier-1', company: 'Samsung', location: 'South Korea', country: 'South Korea' },
-    ],
-    govContracts: 18,
-    riskScore: 9.1,
-  },
-  {
-    ticker: 'CRWD',
-    name: 'CrowdStrike',
-    sector: 'Cybersecurity',
-    hq: { city: 'Austin, TX', lat: 30.2672, lng: -97.7431, country: 'USA' },
-    marketCap: 38.5,
-    operations: [
-      { type: 'Engineering', location: 'Sunnyvale, CA', country: 'USA' },
-    ],
-    supplyChain: [
-      { tier: 'Cloud', company: 'AWS', location: 'Global', country: 'USA' },
-    ],
-    govContracts: 23,
-    riskScore: 3.1,
-  },
-]
-
-const SECTOR_COLORS: Record<string, string> = {
-  'Defence Primes': '#1e40af',
-  'Defence IT': '#06b6d4',
-  Cybersecurity: '#dc2626',
-  Semiconductors: '#22c55e',
-  Space: '#a855f7',
-  Energy: '#f97316',
+/* =========================
+     TYPES
+  ========================= */
+type Hub = {
+    id: string
+    name: string
+    lat: number
+    lng: number
+    country: string
+    exchange: string
+    tickers: string[]
+    marketCap: string
+    volume: string
+    change: number
+    color: string
+    importance: number
 }
 
-const latLngToXYZ = (lat: number, lng: number, radius: number = 2.5) => {
-  const phi = (90 - lat) * (Math.PI / 180)
-  const theta = (lng + 180) * (Math.PI / 180)
-  const x = -(radius * Math.sin(phi) * Math.cos(theta))
-  const y = radius * Math.cos(phi)
-  const z = radius * Math.sin(phi) * Math.sin(theta)
-  return new THREE.Vector3(x, y, z)
+type Link = {
+    from: string
+    to: string
+    strength: number
 }
 
-export default function GlobalStockGlobe() {
-  const containerRef = useRef<HTMLDivElement>(null)
-  const sceneRef = useRef<THREE.Scene | null>(null)
-  const rendererRef = useRef<THREE.WebGLRenderer | null>(null)
-  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null)
-  const globeRef = useRef<THREE.Group | null>(null)
-  const pinsRef = useRef<Map<string, THREE.Object3D>>(new Map())
-  const raycasterRef = useRef(new THREE.Raycaster())
-  const mouseRef = useRef(new THREE.Vector2())
+type SectorItem = {
+    name: string
+    change: number
+    color: string
+}
 
-  const [selectedCompany, setSelectedCompany] = useState<(typeof COMPANY_DATA)[0] | null>(null)
-  const [hoveredTicker, setHoveredTicker] = useState<string | null>(null)
-  const [stockPrices, setStockPrices] = useState<Record<string, { price: number; change: number }>>({})
-  const [isDragging, setIsDragging] = useState(false)
-  const dragStartRef = useRef({ x: 0, y: 0 })
-  const rotationRef = useRef({ x: 0, y: 0 })
-  const targetRotationRef = useRef({ x: 0, y: 0 })
+/* =========================
+     DATA (ALL 12 HUBS FROM OLD)
+  ========================= */
+const hubs: Hub[] = [
+  { id: 'ny', name: 'New York', lat: 40.7128, lng: -74.006, country: 'USA', exchange: 'NYSE', tickers: ['PLTR','NVDA','BA','LMT'], marketCap: '52.3T', volume: '12.8B', change: +1.24, color: '#00ff88', importance: 1 },
+  { id: 'ldn', name: 'London', lat: 51.5074, lng: -0.1278, country: 'UK', exchange: 'LSE', tickers: ['BAE','RYCEY'], marketCap: '3.2T', volume: '2.1B', change: -0.38, color: '#00ccff', importance: 0.9 },
+  { id: 'tokyo', name: 'Tokyo', lat: 35.6762, lng: 139.6503, country: 'Japan', exchange: 'TSE', tickers: ['MHI','KHI'], marketCap: '6.1T', volume: '3.4B', change: +0.87, color: '#ff6600', importance: 0.85 },
+  { id: 'shanghai', name: 'Shanghai', lat: 31.2304, lng: 121.4737, country: 'China', exchange: 'SSE', tickers: ['AVIC'], marketCap: '7.8T', volume: '5.2B', change: -1.12, color: '#ff3366', importance: 0.8 },
+  { id: 'frankfurt', name: 'Frankfurt', lat: 50.1109, lng: 8.6821, country: 'Germany', exchange: 'FRA', tickers: ['AIR','RHM'], marketCap: '2.4T', volume: '1.3B', change: +0.56, color: '#9966ff', importance: 0.7 },
+  { id: 'sydney', name: 'Sydney', lat: -33.8688, lng: 151.2093, country: 'Australia', exchange: 'ASX', tickers: ['ASB'], marketCap: '1.8T', volume: '0.8B', change: +0.34, color: '#ffcc00', importance: 0.6 },
+  { id: 'singapore', name: 'Singapore', lat: 1.3521, lng: 103.8198, country: 'Singapore', exchange: 'SGX', tickers: ['STE'], marketCap: '0.7T', volume: '0.4B', change: -0.21, color: '#00ffcc', importance: 0.6 },
+  { id: 'tlv', name: 'Tel Aviv', lat: 32.0853, lng: 34.7818, country: 'Israel', exchange: 'TASE', tickers: ['ESLT'], marketCap: '0.3T', volume: '0.2B', change: +2.15, color: '#66ff66', importance: 1 },
+  { id: 'seoul', name: 'Seoul', lat: 37.5665, lng: 126.978, country: 'S.Korea', exchange: 'KRX', tickers: ['KAI'], marketCap: '2.1T', volume: '1.8B', change: +0.93, color: '#ff9966', importance: 0.7 },
+  { id: 'mumbai', name: 'Mumbai', lat: 19.076, lng: 72.8777, country: 'India', exchange: 'BSE', tickers: ['HAL','BEL'], marketCap: '4.2T', volume: '2.6B', change: +1.67, color: '#ff66cc', importance: 0.75 },
+  { id: 'toronto', name: 'Toronto', lat: 43.6532, lng: -79.3832, country: 'Canada', exchange: 'TSX', tickers: ['CAE'], marketCap: '2.9T', volume: '1.1B', change: +0.45, color: '#66ccff', importance: 0.65 },
+  { id: 'riyadh', name: 'Riyadh', lat: 24.7136, lng: 46.6753, country: 'Saudi', exchange: 'TADAWUL', tickers: ['SAMI'], marketCap: '2.7T', volume: '0.9B', change: -0.78, color: '#cc9900', importance: 0.65 },
+  ]
 
-  // Fetch stock prices
-  useEffect(() => {
-    const fetchPrices = async () => {
-      try {
-        const response = await fetch('/api/stocks')
-        const data = await response.json()
-        const priceMap: Record<string, { price: number; change: number }> = {}
-        data.forEach((stock: any) => {
-          priceMap[stock.ticker] = {
-            price: stock.price,
-            change: stock.change,
-          }
-        })
-        setStockPrices(priceMap)
-      } catch (error) {
-        console.error('Failed to fetch stock prices:', error)
-      }
-    }
+const links: Link[] = [
+  { from: 'ny', to: 'ldn', strength: 0.8 },
+  { from: 'ny', to: 'tokyo', strength: 0.9 },
+  { from: 'ny', to: 'frankfurt', strength: 0.7 },
+  { from: 'ldn', to: 'frankfurt', strength: 0.6 },
+  { from: 'tokyo', to: 'shanghai', strength: 0.5 },
+  { from: 'ny', to: 'seoul', strength: 0.7 },
+  { from: 'ny', to: 'mumbai', strength: 0.6 },
+  { from: 'ny', to: 'tlv', strength: 0.8 },
+  { from: 'ldn', to: 'singapore', strength: 0.5 },
+  { from: 'tokyo', to: 'sydney', strength: 0.4 },
+  ]
 
-    fetchPrices()
-    const interval = setInterval(fetchPrices, 5000)
-    return () => clearInterval(interval)
-  }, [])
+const SECTOR_DATA: SectorItem[] = [
+  { name: 'Defence Primes', change: +2.4, color: '#00ff88' },
+  { name: 'Cybersecurity', change: +1.8, color: '#00ccff' },
+  { name: 'Semiconductors', change: -0.6, color: '#ff6600' },
+  { name: 'AI / ML', change: +3.1, color: '#9966ff' },
+  { name: 'Space', change: +1.2, color: '#ffcc00' },
+  { name: 'Nuclear', change: +0.9, color: '#ff3366' },
+  { name: 'Quantum', change: -1.3, color: '#ff66cc' },
+  { name: 'GovCloud', change: +0.7, color: '#66ccff' },
+  ]
 
-  useEffect(() => {
-    const container = containerRef.current
-    if (!container) return
+/* =========================
+     GEO -> 3D (D3 inspired)
+  ========================= */
+function latLngToVector(lat: number, lng: number, radius = 2.5) {
+    const phi = (90 - lat) * (Math.PI / 180)
+    const theta = (lng + 180) * (Math.PI / 180)
+    return new THREE.Vector3(
+          -radius * Math.sin(phi) * Math.cos(theta),
+          radius * Math.cos(phi),
+          radius * Math.sin(phi) * Math.sin(theta)
+        )
+}
 
-    // Scene Setup
-    const scene = new THREE.Scene()
-    sceneRef.current = scene
-
-    const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000)
-    camera.position.z = 6
-    cameraRef.current = camera
-
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
-    renderer.setSize(container.clientWidth, container.clientHeight)
-    renderer.setPixelRatio(window.devicePixelRatio)
-    container.appendChild(renderer.domElement)
-    rendererRef.current = renderer
-
-    // Lighting
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5)
-    scene.add(ambientLight)
-
-    const pointLight = new THREE.PointLight(0x00d4ff, 1)
-    pointLight.position.set(4, 4, 4)
-    scene.add(pointLight)
-
-    // Globe Group
-    const globeGroup = new THREE.Group()
-    globeRef.current = globeGroup
-    scene.add(globeGroup)
-
-    // Create Globe
-    const globeGeom = new THREE.SphereGeometry(2.5, 128, 128)
-    const globeMat = new THREE.MeshPhongMaterial({
-      color: 0x0a1628,
-      emissive: 0x001a3d,
-      wireframe: false,
-      shininess: 10,
-    })
-    const globe = new THREE.Mesh(globeGeom, globeMat)
-    globeGroup.add(globe)
-
-    // Wireframe overlay
-    const wireframeGeom = new THREE.SphereGeometry(2.52, 64, 64)
-    const wireframeMat = new THREE.LineBasicMaterial({
-      color: 0x00d4ff,
-      transparent: true,
-      opacity: 0.06,
-    })
-    const wireframeLines = new THREE.LineSegments(
-      new THREE.WireframeGeometry(wireframeGeom),
-      wireframeMat
-    )
-    globeGroup.add(wireframeLines)
-
-    // Atmospheric glow
-    const glowGeom = new THREE.SphereGeometry(2.6, 64, 64)
-    const glowMat = new THREE.MeshBasicMaterial({
-      color: 0x0099ff,
-      transparent: true,
-      opacity: 0.08,
-      side: THREE.BackSide,
-    })
-    const glow = new THREE.Mesh(glowGeom, glowMat)
-    globeGroup.add(glow)
-
-    // Create company pins
-    COMPANY_DATA.forEach((company, index) => {
-      const pos = latLngToXYZ(company.hq.lat, company.hq.lng)
-
-      const pinGroup = new THREE.Group()
-      pinGroup.position.copy(pos)
-      pinGroup.userData = {
-        company,
-        ticker: company.ticker,
-      }
-
-      // Bubble size based on market cap (normalized)
-      const bubbleScale = Math.min(0.08 + (company.marketCap / 500) * 0.1, 0.25)
-
-      // Pin sphere
-      const pinGeom = new THREE.SphereGeometry(bubbleScale, 20, 20)
-      const pinColor = SECTOR_COLORS[company.sector] || '#00d4ff'
-      const pinMat = new THREE.MeshStandardMaterial({
-        color: pinColor,
-        emissive: pinColor,
-        emissiveIntensity: 0.6,
-        metalness: 0.7,
-        roughness: 0.2,
-      })
-      const pinMesh = new THREE.Mesh(pinGeom, pinMat)
-      pinGroup.add(pinMesh)
-
-      // Pulsing ring
-      const ringGeom = new THREE.TorusGeometry(bubbleScale * 1.8, bubbleScale * 0.15, 16, 32)
-      const ringMat = new THREE.MeshBasicMaterial({
-        color: pinColor,
-        transparent: true,
-        opacity: 0.5,
-      })
-      const ring = new THREE.Mesh(ringGeom, ringMat)
-      pinGroup.add(ring)
-
-      pinGroup.userData.pulseRing = ring
-      pinGroup.userData.bubbleScale = bubbleScale
-      pinGroup.scale.set(0, 0, 0)
-
-      globeGroup.add(pinGroup)
-      pinsRef.current.set(company.ticker, pinGroup)
-
-      // Animate appearance
-      setTimeout(() => {
-        const startTime = Date.now()
-        const duration = 400
-        const animate = () => {
-          const elapsed = Date.now() - startTime
-          const progress = Math.min(elapsed / duration, 1)
-          pinGroup.scale.set(progress, progress, progress)
-          if (progress < 1) requestAnimationFrame(animate)
-        }
-        animate()
-      }, index * 40)
-
-      // Create supply chain pins
-      company.supplyChain.forEach((supplier) => {
-        // Simulate supply chain location (would use real coordinates in production)
-        const offsetLat = company.hq.lat + (Math.random() - 0.5) * 15
-        const offsetLng = company.hq.lng + (Math.random() - 0.5) * 15
-        const supPos = latLngToXYZ(offsetLat, offsetLng)
-
-        const supGeom = new THREE.SphereGeometry(bubbleScale * 0.5, 12, 12)
-        const supColor = supplier.riskLevel === 'critical' ? '#dc2626' : supplier.riskLevel === 'high' ? '#f97316' : '#fbbf24'
-        const supMat = new THREE.MeshStandardMaterial({
-          color: supColor,
-          emissive: supColor,
-          emissiveIntensity: 0.4,
-          transparent: true,
-          opacity: 0.6,
-        })
-        const supPin = new THREE.Mesh(supGeom, supMat)
-        supPin.position.copy(supPos)
-        supPin.userData = {
-          company,
-          isSupplier: true,
-          supplier: supplier.company,
-        }
-        globeGroup.add(supPin)
-      })
-    })
-
-    // Background stars
-    const starCount = 500
-    const starGeom = new THREE.BufferGeometry()
-    const starPositions = new Float32Array(starCount * 3)
-    for (let i = 0; i < starCount * 3; i += 3) {
-      starPositions[i] = (Math.random() - 0.5) * 50
-      starPositions[i + 1] = (Math.random() - 0.5) * 50
-      starPositions[i + 2] = (Math.random() - 0.5) * 50
-    }
-    starGeom.setAttribute('position', new THREE.BufferAttribute(starPositions, 3))
-    const starMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.08, sizeAttenuation: true })
-    const stars = new THREE.Points(starGeom, starMat)
-    scene.add(stars)
-
-    // Animation Loop
-    let animationId: number
-    const animate = () => {
-      animationId = requestAnimationFrame(animate)
-
-      if (!isDragging) {
-        targetRotationRef.current.y += 0.0002
-      }
-
-      rotationRef.current.x += (targetRotationRef.current.x - rotationRef.current.x) * 0.1
-      rotationRef.current.y += (targetRotationRef.current.y - rotationRef.current.y) * 0.1
-
-      if (globeGroup) {
-        globeGroup.rotation.x = rotationRef.current.x
-        globeGroup.rotation.y = rotationRef.current.y
-      }
-
-      // Animate pins with stock performance
-      pinsRef.current.forEach((pin, ticker) => {
-        const price = stockPrices[ticker]
-        if (pin.userData.pulseRing) {
-          const time = Date.now() * 0.003
-          const pulse = 0.7 + Math.sin(time) * 0.4
-          pin.userData.pulseRing.scale.set(pulse, pulse, 1)
-
-          // Color change based on stock performance
-          if (price && price.change > 0) {
-            pin.userData.pulseRing.material.color.set(0x22c55e) // Green
-          } else if (price && price.change < 0) {
-            pin.userData.pulseRing.material.color.set(0xdc2626) // Red
-          }
-        }
-
-        // Scale bubble based on trading activity (simulated)
-        if (hoveredTicker === ticker) {
-          pin.scale.lerp(new THREE.Vector3(1.2, 1.2, 1.2), 0.1)
-        } else {
-          pin.scale.lerp(new THREE.Vector3(1, 1, 1), 0.1)
-        }
-      })
-
-      renderer.render(scene, camera)
-    }
-    animate()
-
-    // Mouse interactions
-    const onMouseDown = (e: MouseEvent) => {
-      setIsDragging(true)
-      dragStartRef.current = { x: e.clientX, y: e.clientY }
-    }
-
-    const onMouseMove = (e: MouseEvent) => {
-      mouseRef.current.x = (e.clientX / window.innerWidth) * 2 - 1
-      mouseRef.current.y = -(e.clientY / window.innerHeight) * 2 + 1
-
-      if (isDragging) {
-        const deltaX = e.clientX - dragStartRef.current.x
-        const deltaY = e.clientY - dragStartRef.current.y
-        targetRotationRef.current.y += deltaX * 0.01
-        targetRotationRef.current.x += deltaY * 0.01
-        dragStartRef.current = { x: e.clientX, y: e.clientY }
-      } else {
-        raycasterRef.current.setFromCamera(mouseRef.current, camera)
-        const pins = Array.from(pinsRef.current.values())
-        const intersects = raycasterRef.current.intersectObjects(pins, true)
-
-        if (intersects.length > 0) {
-          const pin = intersects[0].object.parent as THREE.Object3D
-          setHoveredTicker(pin.userData?.ticker || null)
-        } else {
-          setHoveredTicker(null)
-        }
-      }
-    }
-
-    const onMouseUp = () => {
-      setIsDragging(false)
-    }
-
-    const onClick = (e: MouseEvent) => {
-      mouseRef.current.x = (e.clientX / window.innerWidth) * 2 - 1
-      mouseRef.current.y = -(e.clientY / window.innerHeight) * 2 + 1
-
-      raycasterRef.current.setFromCamera(mouseRef.current, camera)
-      const pins = Array.from(pinsRef.current.values())
-      const intersects = raycasterRef.current.intersectObjects(pins, true)
-
-      if (intersects.length > 0) {
-        const pin = intersects[0].object.parent as THREE.Object3D
-        const company = pin.userData?.company
-        if (company) {
-          setSelectedCompany(company)
-        }
-      }
-    }
-
-    container.addEventListener('mousedown', onMouseDown)
-    window.addEventListener('mousemove', onMouseMove)
-    window.addEventListener('mouseup', onMouseUp)
-    container.addEventListener('click', onClick)
-
-    const handleResize = () => {
-      const width = container.clientWidth
-      const height = container.clientHeight
-      camera.aspect = width / height
-      camera.updateProjectionMatrix()
-      renderer.setSize(width, height)
-    }
-    window.addEventListener('resize', handleResize)
-
-    return () => {
-      cancelAnimationFrame(animationId)
-      container.removeEventListener('mousedown', onMouseDown)
-      window.removeEventListener('mousemove', onMouseMove)
-      window.removeEventListener('mouseup', onMouseUp)
-      container.removeEventListener('click', onClick)
-      window.removeEventListener('resize', handleResize)
-      renderer.dispose()
-      container.removeChild(renderer.domElement)
-    }
-  }, [isDragging, hoveredTicker, stockPrices])
-
-  const getStockColor = (change: number) => {
-    return change > 0 ? '#22c55e' : change < 0 ? '#dc2626' : '#94a3b8'
-  }
+/* =========================
+   EARTH LAYER
+========================= */
+function EarthLayer() {
+    const meshRef = useRef<THREE.Mesh>(null)
 
   return (
-    <>
-      {/* Section Header */}
-      <div className="mb-4 fade-up d6">
-        <div className="font-mono text-[10px] tracking-[3px] uppercase text-[var(--accent)] flex items-center gap-2">
-          <span className="w-6 h-px bg-[var(--accent)]" />◆ Global Stock Intelligence Globe
-        </div>
-      </div>
-
-      {/* Stats Bar */}
-      <div className="glass mb-4 p-4 fade-up d6">
-        <div className="font-mono text-[9px] uppercase tracking-widest text-[var(--text-dim)]">
-          {COMPANY_DATA.length} Companies Tracked · {COMPANY_DATA.reduce((acc, c) => acc + c.operations.length, 0)} Global Operations · Risk Score System Active
-        </div>
-      </div>
-
-      {/* 3D Globe */}
-      <div
-        ref={containerRef}
-        className="relative w-full bg-black rounded-lg border border-[var(--border)] mb-7 overflow-hidden cursor-grab active:cursor-grabbing"
-        style={{ height: '70vh', perspective: '1200px' }}
-      />
-
-      {/* Hover Tooltip */}
-      {hoveredTicker && stockPrices[hoveredTicker] && (
-        <div className="fixed bottom-4 left-4 glass p-4 rounded border border-[var(--border)] z-20 font-mono text-[10px]">
-          <div className="text-white font-bold mb-2">{hoveredTicker}</div>
-          <div className="flex items-center gap-2">
-            <span className="text-[var(--text-dim)]">$</span>
-            <span className="text-white">{stockPrices[hoveredTicker].price.toFixed(2)}</span>
-            <span className={getStockColor(stockPrices[hoveredTicker].change)}>
-              {stockPrices[hoveredTicker].change > 0 ? '+' : ''}{stockPrices[hoveredTicker].change.toFixed(2)}%
-            </span>
-          </div>
-          <div className="text-[var(--text-dim)] mt-2">Click for details</div>
-        </div>
-      )}
-
-      {/* Detail Panel */}
-      {selectedCompany && (
-        <div className="fixed right-0 top-0 h-screen w-[420px] glass border-l border-[var(--border)] overflow-y-auto z-30 shadow-[0_0_50px_rgba(0,255,80,0.1)]">
-          <div className="sticky top-0 bg-black/80 backdrop-blur p-6 border-b border-[var(--border)]">
-            <div className="flex items-start justify-between">
-              <div>
-                <div className="font-mono text-2xl font-black text-white">{selectedCompany.ticker}</div>
-                <div className="font-mono text-xs text-[var(--text-dim)]">{selectedCompany.name}</div>
-              </div>
-              <button
-                onClick={() => setSelectedCompany(null)}
-                className="text-[var(--text-dim)] hover:text-[var(--accent)] transition-colors"
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            {/* Stock Price */}
-            {stockPrices[selectedCompany.ticker] && (
-              <div className="mt-4 pt-4 border-t border-[var(--border)]">
-                <div className="flex items-baseline gap-3">
-                  <div className="font-mono text-xl font-bold text-white">
-                    ${stockPrices[selectedCompany.ticker].price.toFixed(2)}
-                  </div>
-                  <div
-                    className="font-mono text-sm font-bold flex items-center gap-1"
-                    style={{ color: getStockColor(stockPrices[selectedCompany.ticker].change) }}
-                  >
-                    <TrendingUp size={14} />
-                    {stockPrices[selectedCompany.ticker].change > 0 ? '+' : ''}
-                    {stockPrices[selectedCompany.ticker].change.toFixed(2)}%
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="p-6 space-y-6">
-            {/* Headquarters */}
-            <div>
-              <div className="font-mono text-[9px] text-[var(--accent)] uppercase tracking-widest mb-3 flex items-center gap-2">
-                <MapPin size={12} />◆ Headquarters
-              </div>
-              <div className="font-mono text-[10px]">
-                <div className="text-white font-bold">{selectedCompany.hq.city}</div>
-                <div className="text-[var(--text-dim)]">{selectedCompany.hq.country}</div>
-                <div className="text-[var(--text-dim)] text-[9px] mt-1">
-                  {selectedCompany.hq.lat.toFixed(4)}°, {selectedCompany.hq.lng.toFixed(4)}°
-                </div>
-              </div>
-            </div>
-
-            {/* Key Metrics */}
-            <div>
-              <div className="font-mono text-[9px] text-[var(--accent)] uppercase tracking-widest mb-3">◆ Key Metrics</div>
-              <div className="grid grid-cols-2 gap-4 font-mono text-[10px]">
-                <div className="bg-[rgba(0,0,0,0.3)] p-3 rounded border border-[var(--border)]">
-                  <div className="text-[var(--text-dim)]">Market Cap</div>
-                  <div className="text-white font-bold">${selectedCompany.marketCap}B</div>
-                </div>
-                <div className="bg-[rgba(0,0,0,0.3)] p-3 rounded border border-[var(--border)]">
-                  <div className="text-[var(--text-dim)]">Gov Contracts</div>
-                  <div className="text-white font-bold">{selectedCompany.govContracts}</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Geopolitical Risk */}
-            <div>
-              <div className="font-mono text-[9px] text-[var(--accent)] uppercase tracking-widest mb-3 flex items-center gap-2">
-                <AlertTriangle size={12} />◆ Risk Assessment
-              </div>
-              <div className="relative h-2 bg-[rgba(0,0,0,0.3)] rounded overflow-hidden border border-[var(--border)]">
-                <div
-                  className="h-full bg-gradient-to-r from-[#22c55e] to-[#dc2626]"
-                  style={{ width: `${(selectedCompany.riskScore / 10) * 100}%` }}
-                />
-              </div>
-              <div className="font-mono text-[9px] text-[var(--text-dim)] mt-2 flex justify-between">
-                <span>Geopolitical Risk</span>
-                <span className="text-white font-bold">{selectedCompany.riskScore}/10</span>
-              </div>
-            </div>
-
-            {/* Operations */}
-            <div>
-              <div className="font-mono text-[9px] text-[var(--accent)] uppercase tracking-widest mb-3">
-                ◆ Operations ({selectedCompany.operations.length})
-              </div>
-              <div className="space-y-2">
-                {selectedCompany.operations.map((op: any, i) => (
-                  <div key={i} className="bg-[rgba(0,0,0,0.3)] p-3 rounded border border-[var(--border)] font-mono text-[9px]">
-                    <div className="text-white font-bold">{op.type}</div>
-                    <div className="text-[var(--text-dim)]">{op.location}, {op.country}</div>
-                    {op.employees && <div className="text-[var(--accent2)]">{op.employees.toLocaleString()} employees</div>}
-                    {op.focus && <div className="text-[var(--accent)]">{op.focus}</div>}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Supply Chain */}
-            {selectedCompany.supplyChain.length > 0 && (
-              <div>
-                <div className="font-mono text-[9px] text-[var(--accent)] uppercase tracking-widest mb-3">
-                  ◆ Supply Chain ({selectedCompany.supplyChain.length})
-                </div>
-                <div className="space-y-2">
-                  {selectedCompany.supplyChain.map((supplier, i) => (
-                    <div key={i} className="bg-[rgba(0,0,0,0.3)] p-3 rounded border border-[var(--border)] font-mono text-[9px]">
-                      <div className="text-white font-bold">{supplier.company}</div>
-                      <div className="text-[var(--text-dim)]">{supplier.location}, {supplier.country}</div>
-                      {supplier.riskLevel && (
-                        <div
-                          className="text-[9px] font-bold mt-1"
-                          style={{
-                            color:
-                              supplier.riskLevel === 'critical'
-                                ? '#dc2626'
-                                : supplier.riskLevel === 'high'
-                                  ? '#f97316'
-                                  : '#22c55e',
-                          }}
-                        >
-                          {supplier.riskLevel.toUpperCase()} RISK
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-    </>
-  )
+        <>
+          {/* Core sphere */}
+              <mesh ref={meshRef}>
+                      <sphereGeometry args={[2.5, 64, 64]} />
+                      <meshStandardMaterial
+                                  color="#08121a"
+                                  roughness={0.8}
+                                  metalness={0.3}
+                                />
+              </mesh>mesh>
+          {/* Atmosphere glow */}
+              <mesh>
+                      <sphereGeometry args={[2.7, 64, 64]} />
+                      <meshBasicMaterial
+                                  color="#00ff88"
+                                  transparent
+                                  opacity={0.05}
+                                  side={THREE.BackSide}
+                                />
+              </mesh>mesh>
+          {/* Outer atmosphere */}
+              <mesh>
+                      <sphereGeometry args={[2.85, 64, 64]} />
+                      <meshBasicMaterial
+                                  color="#00ccff"
+                                  transparent
+                                  opacity={0.02}
+                                  side={THREE.BackSide}
+                                />
+              </mesh>mesh>
+          {/* Graticule lines */}
+              <GraticuleLayer />
+        </>>
+      )
 }
+
+/* =========================
+   GRATICULE LAYER
+   ========================= */
+function GraticuleLayer() {
+    const gratLines = useMemo(() => {
+          const lines: THREE.Vector3[][] = []
+                // Latitude lines
+                for (let lat = -80; lat <= 80; lat += 20) {
+                        const pts: THREE.Vector3[] = []
+                                for (let lng = -180; lng <= 180; lng += 5) {
+                                          pts.push(latLngToVector(lat, lng, 2.52))
+                                }
+                        lines.push(pts)
+                }
+          // Longitude lines
+          for (let lng = -180; lng < 180; lng += 20) {
+                  const pts: THREE.Vector3[] = []
+                          for (let lat = -90; lat <= 90; lat += 5) {
+                                    pts.push(latLngToVector(lat, lng, 2.52))
+                          }
+                  lines.push(pts)
+          }
+          return lines
+    }, [])
+      
+        return (
+              <>
+                {gratLines.map((pts, i) => (
+                        <Line
+                                    key={`grat-${i}`}
+                                    points={pts}
+                                    color="#00ff88"
+                                    lineWidth={0.3}
+                                    transparent
+                                    opacity={0.08}
+                                  />
+                      ))}
+              </>>
+            )
+}
+
+/* =========================
+   HUB LAYER (with hover)
+   ========================= */
+function HubLayer({ onHover, onSelect, hoveredId }: {
+    onHover: (id: string | null) => void
+    onSelect: (id: string) => void
+    hoveredId: string | null
+}) {
+    return (
+          <>
+            {hubs.map((h) => (
+                    <HubDot key={h.id} hub={h} onHover={onHover} onSelect={onSelect} isHovered={hoveredId === h.id} />
+                  ))}
+          </>>
+        )
+}
+
+function HubDot({ hub, onHover, onSelect, isHovered }: {
+    hub: Hub
+    onHover: (id: string | null) => void
+    onSelect: (id: string) => void
+    isHovered: boolean
+}) {
+    const pos = useMemo(() => latLngToVector(hub.lat, hub.lng), [hub.lat, hub.lng])
+        const meshRef = useRef<THREE.Mesh>(null)
+            const glowRef = useRef<THREE.Mesh>(null)
+                const ringRef = useRef<THREE.Mesh>(null)
+                  
+                    useFrame(({ clock }) => {
+                          const t = clock.getElapsedTime()
+                                if (meshRef.current) {
+                                        const scale = isHovered ? 1.8 : 1 + 0.2 * Math.sin(t * 2 + hub.lat)
+                                                meshRef.current.scale.setScalar(scale)
+                                }
+                          if (glowRef.current) {
+                                  const glowScale = isHovered ? 3 : 2 + 0.5 * Math.sin(t * 1.5 + hub.lng)
+                                          glowRef.current.scale.setScalar(glowScale)
+                          }
+                          if (ringRef.current) {
+                                  const ringScale = 1 + ((t * 0.5 + hub.lat * 0.01) % 1) * 3
+                                          const ringOpacity = 1 - ((t * 0.5 + hub.lat * 0.01) % 1)
+                                                  ringRef.current.scale.setScalar(ringScale);
+                                  (ringRef.current.material as THREE.MeshBasicMaterial).opacity = ringOpacity * 0.5
+                          }
+                    })
+                      
+                        const color = new THREE.Color(hub.color)
+                          
+                            return (
+                                  <group position={pos}>
+                                    {/* Glow */}
+                                        <mesh ref={glowRef}>
+                                                <sphereGeometry args={[0.06 * hub.importance, 16, 16]} />
+                                                <meshBasicMaterial color={hub.color} transparent opacity={0.15} />
+                                        </mesh>mesh>
+                                    {/* Core dot */}
+                                        <mesh
+                                                  ref={meshRef}
+                                                  onPointerOver={() => onHover(hub.id)}
+                                                  onPointerOut={() => onHover(null)}
+                                                  onClick={() => onSelect(hub.id)}
+                                                >
+                                                <sphereGeometry args={[0.04 * hub.importance, 16, 16]} />
+                                                <meshBasicMaterial color={hub.color} />
+                                        </mesh>mesh>
+                                    {/* Center bright point */}
+                                        <mesh>
+                                                <sphereGeometry args={[0.015, 12, 12]} />
+                                                <meshBasicMaterial color="#ffffff" />
+                                        </mesh>mesh>
+                                    {/* Pulse ring */}
+                                        <mesh ref={ringRef}>
+                                                <ringGeometry args={[0.04, 0.05, 32]} />
+                                                <meshBasicMaterial color={hub.color} transparent opacity={0.5} side={THREE.DoubleSide} />
+                                        </mesh>mesh>
+                                    {/* Tooltip on hover */}
+                                    {isHovered && (
+                                            <Html distanceFactor={8} position={[0, 0.15, 0]} center>
+                                                      <div style={{
+                                                          background: 'rgba(0,10,20,0.92)',
+                                                          border: `1px solid ${hub.color}60`,
+                                                          borderRadius: 8,
+                                                          padding: '8px 12px',
+                                                          backdropFilter: 'blur(10px)',
+                                                          pointerEvents: 'none',
+                                                          minWidth: 160,
+                                                          fontFamily: 'monospace',
+                                            }}>
+                                                                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                                                                                <div style={{ width: 8, height: 8, borderRadius: '50%', background: hub.color }} />
+                                                                                <span style={{ color: '#fff', fontSize: 12, fontWeight: 'bold' }}>{hub.name}</span>span>
+                                                                                <span style={{ color: '#666', fontSize: 9 }}>{hub.exchange}</span>span>
+                                                                  </div>div>
+                                                                  <div style={{ display: 'flex', gap: 12, fontSize: 10 }}>
+                                                                                <span style={{ color: '#888' }}>MCap: {hub.marketCap}</span>span>
+                                                                                <span style={{ color: hub.change >= 0 ? '#00ff88' : '#ff4444', fontWeight: 'bold' }}>
+                                                                                  {hub.change >= 0 ? '+' : ''}{hub.change.toFixed(2)}%
+                                                                                </span>span>
+                                                                  </div>div>
+                                                                  <div style={{ color: '#555', fontSize: 9, marginTop: 4 }}>
+                                                                    {hub.tickers.join(' | ')}
+                                                                  </div>div>
+                                                      </div>div>
+                                            </Html>Html>
+                                        )}
+                                  </group>group>
+                                )
+                              }
+                              
+                              /* =========================
+                                 ARC LAYER (D3 interpolation)
+                                 ========================= */
+function ArcLayer() {
+    return (
+          <>
+            {links.map((link, i) => (
+                    <ArcLine key={i} link={link} index={i} />
+                  ))}
+          </>>
+        )
+}
+
+function ArcLine({ link, index }: { link: Link; index: number }) {
+    const from = hubs.find(h => h.id === link.from)!
+        const to = hubs.find(h => h.id === link.to)!
+          
+            const points = useMemo(() => {
+                  const interpolate = geoInterpolate(
+                          [from.lng, from.lat],
+                          [to.lng, to.lat]
+                        )
+                        const pts: THREE.Vector3[] = []
+                              for (let t = 0; t <= 1; t += 0.02) {
+                                      const [lng, lat] = interpolate(t)
+                                              const v = latLngToVector(lat, lng)
+                                                      const height = Math.sin(Math.PI * t) * (0.6 + link.strength)
+                                                              v.multiplyScalar(1 + height * 0.15)
+                                                                      pts.push(v)
+                              }
+                  return pts
+            }, [from.lng, from.lat, to.lng, to.lat, link.strength])
+              
+                return (
+                      <Line
+                              points={points}
+                              color="#00ff88"
+                              lineWidth={1}
+                              transparent
+                              opacity={0.35 + link.strength * 0.2}
+                            />
+                    )
+}
+
+/* =========================
+   PULSE LAYER (data flow)
+   ========================= */
+function PulseLayer() {
+    const refs = useRef<THREE.Mesh[]>([])
+      
+        useFrame(({ clock }) => {
+              const t = clock.getElapsedTime()
+                    refs.current.forEach((mesh, i) => {
+                            if (!mesh || !links[i]) return
+                                    const link = links[i]
+                                            const from = hubs.find(h => h.id === link.from)!
+                                                    const to = hubs.find(h => h.id === link.to)!
+                                                            const interpolate = geoInterpolate(
+                                                                      [from.lng, from.lat],
+                                                                      [to.lng, to.lat]
+                                                                    )
+                                                                    const tt = (t * 0.1 + i * 0.2) % 1
+                                                                            const [lng, lat] = interpolate(tt)
+                                                                                    const pos = latLngToVector(lat, lng)
+                                                                                            const height = Math.sin(Math.PI * tt) * (0.6 + link.strength)
+                                                                                                    pos.multiplyScalar(1 + height * 0.15)
+                                                                                                            mesh.position.copy(pos)
+                      })
+        })
+          
+            return (
+                  <>
+                    {links.map((link, i) => {
+                            const from = hubs.find(h => h.id === link.from)!
+                                      return (
+                                                  <mesh
+                                                                key={i}
+                                                                ref={(el) => { if (el) refs.current[i] = el }}
+                                                              >
+                                                              <sphereGeometry args={[0.03, 12, 12]} />
+                                                              <meshBasicMaterial color={from.color} transparent opacity={0.9} />
+                                                  </mesh>mesh>
+                                                )
+                  })}
+                  </>>
+                )
+}
+
+/* =========================
+   SCAN LINE EFFECT
+   ========================= */
+function ScanLine() {
+    const meshRef = useRef<THREE.Mesh>(null)
+      
+        useFrame(({ clock }) => {
+              if (!meshRef.current) return
+                    const t = clock.getElapsedTime()
+                          const y = Math.sin(t * 0.3) * 2.5
+                                meshRef.current.position.y = y
+        })
+          
+            return (
+                  <mesh ref={meshRef} rotation={[0, 0, 0]}>
+                        <ringGeometry args={[2.5, 2.55, 64]} />
+                        <meshBasicMaterial color="#00ff88" transparent opacity={0.08} side={THREE.DoubleSide} />
+                  </mesh>mesh>
+                )
+}
+
+/* =========================
+   ORBITAL RINGS
+   ========================= */
+function OrbitalRings() {
+    const groupRef = useRef<THREE.Group>(null)
+      
+        useFrame(({ clock }) => {
+              if (!groupRef.current) return
+                    groupRef.current.rotation.y = clock.getElapsedTime() * 0.05
+        })
+          
+            const rings = useMemo(() => {
+                  const configs = [
+                    { radius: 3.0, tilt: 0.3, color: '#00ff88', opacity: 0.12 },
+                    { radius: 3.3, tilt: 0.8, color: '#00ccff', opacity: 0.08 },
+                    { radius: 3.6, tilt: 1.2, color: '#9966ff', opacity: 0.06 },
+                        ]
+                        return configs.map((c, i) => {
+                                const pts: THREE.Vector3[] = []
+                                        for (let a = 0; a <= 360; a += 2) {
+                                                  const rad = (a * Math.PI) / 180
+                                                            pts.push(new THREE.Vector3(
+                                                                        c.radius * Math.cos(rad),
+                                                                        c.radius * Math.sin(rad) * Math.sin(c.tilt),
+                                                                        c.radius * Math.sin(rad) * Math.cos(c.tilt)
+                                                                      ))
+                                        }
+                                return { ...c, pts, key: i }
+                        })
+            }, [])
+              
+                return (
+                      <group ref={groupRef}>
+                        {rings.map((r) => (
+                                <Line
+                                            key={r.key}
+                                            points={r.pts}
+                                            color={r.color}
+                                            lineWidth={0.5}
+                                            transparent
+                                            opacity={r.opacity}
+                                          />
+                              ))}
+                      </group>group>
+                    )
+}
+
+/* =========================
+   MAIN 3D SCENE
+   ========================= */
+function GlobeScene({ onHover, onSelect, hoveredId }: {
+    onHover: (id: string | null) => void
+    onSelect: (id: string) => void
+    hoveredId: string | null
+}) {
+    return (
+          <>
+                <ambientLight intensity={0.4} />
+                <directionalLight position={[5, 5, 5]} intensity={1.2} />
+                <pointLight position={[-5, -5, 5]} intensity={0.3} color="#00ccff" />
+                <EarthLayer />
+                <HubLayer onHover={onHover} onSelect={onSelect} hoveredId={hoveredId} />
+                <ArcLayer />
+                <PulseLayer />
+                <ScanLine />
+                <OrbitalRings />
+                <OrbitControls
+                          autoRotate
+                          autoRotateSpeed={0.4}
+                          enableZoom={true}
+                          minDistance={3.5}
+                          maxDistance={12}
+                          enablePan={false}
+                        />
+          </>>
+        )
+}
+
+/* =========================
+   MAIN COMPONENT (UI + 3D)
+   ========================= */
+export default function GlobalStockGlobe() {
+    const [hoveredId, setHoveredId] = useState<string | null>(null)
+        const [selectedId, setSelectedId] = useState<string | null>(null)
+            const [gIdx, setGIdx] = useState({ value: 7847.32, change: 1.24 })
+              
+                useEffect(() => {
+                      const iv = setInterval(() => {
+                              setGIdx(p => ({
+                                        value: p.value + (Math.random() - 0.48) * 5,
+                                        change: p.change + (Math.random() - 0.5) * 0.1,
+                              }))
+                      }, 3000)
+                            return () => clearInterval(iv)
+                }, [])
+                  
+                    const onHover = useCallback((id: string | null) => setHoveredId(id), [])
+                        const onSelect = useCallback((id: string) => {
+                              setSelectedId(prev => prev === id ? null : id)
+                        }, [])
+                          
+                            const selectedHub = selectedId ? hubs.find(h => h.id === selectedId) : null
+                                const changeClass = (v: number) => v >= 0 ? 'text-emerald-400' : 'text-red-400'
+                                    const changeStr = (v: number) => (v >= 0 ? '+' : '') + v.toFixed(1) + '%'
+                                      
+                                        return (
+                                              <section className="relative w-full py-8 overflow-hidden" style={{ background: 'linear-gradient(180deg, #000508 0%, #000a14 50%, #000508 100%)' }}>
+                                                {/* HEADER */}
+                                                    <div className="text-center mb-4 px-4">
+                                                            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/5 mb-3">
+                                                                      <Globe className="w-3.5 h-3.5 text-emerald-400" />
+                                                                      <span className="text-[10px] font-mono tracking-[0.2em] text-emerald-400 uppercase">Global Intelligence Network</span>span>
+                                                            </div>div>
+                                                            <h2 className="text-2xl md:text-3xl font-bold text-white mb-1">
+                                                                      Global Stock <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">Intelligence</span>span>
+                                                            </h2>h2>
+                                                            <p className="text-xs text-gray-500 font-mono">Real-time defence-tech market analysis across 12 global exchanges</p>p>
+                                                    </div>div>
+                                              
+                                                {/* GLOBAL INDEX BAR */}
+                                                    <div className="flex justify-center mb-4 px-4">
+                                                            <div className="inline-flex items-center gap-4 px-4 py-2 rounded-lg bg-black/40 border border-emerald-500/10">
+                                                                      <div className="flex items-center gap-2">
+                                                                                  <Activity className="w-3.5 h-3.5 text-emerald-400" />
+                                                                                  <span className="text-[10px] font-mono text-gray-400">GLOBAL DEFENCE INDEX</span>span>
+                                                                      </div>div>
+                                                                      <span className="text-sm font-bold text-white font-mono">
+                                                                        {gIdx.value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                                      </span>span>
+                                                                      <span className={'text-xs font-mono font-bold ' + changeClass(gIdx.change)}>
+                                                                        {gIdx.change >= 0 ? '+' : ''}{gIdx.change.toFixed(2)}%
+                                                                      </span>span>
+                                                                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                                                            </div>div>
+                                                    </div>div>
+                                              
+                                                {/* MAIN GRID: Sectors | Globe | Signal Feed */}
+                                                    <div className="relative max-w-7xl mx-auto px-4">
+                                                            <div className="grid grid-cols-1 lg:grid-cols-[200px_1fr_200px] gap-4 items-start">
+                                                              {/* LEFT: Sector Performance */}
+                                                                      <div className="hidden lg:block space-y-1.5">
+                                                                                  <div className="flex items-center gap-2 mb-2">
+                                                                                                <BarChart3 className="w-3.5 h-3.5 text-emerald-400" />
+                                                                                                <span className="text-[10px] font-mono tracking-wider text-emerald-400 uppercase">Sector Performance</span>span>
+                                                                                  </div>div>
+                                                                        {SECTOR_DATA.map((s, i) => (
+                                                              <div key={i} className="flex items-center justify-between px-2.5 py-1.5 rounded bg-white/[0.02] border border-white/[0.04] hover:border-emerald-500/20 transition-colors">
+                                                                              <span className="text-[10px] font-mono text-gray-400">{s.name}</span>span>
+                                                                              <span className={'text-[10px] font-mono font-bold ' + changeClass(s.change)}>{changeStr(s.change)}</span>span>
+                                                              </div>div>
+                                                            ))}
+                                                                      </div>div>
+                                                            
+                                                              {/* CENTER: 3D Globe */}
+                                                                      <div className="relative" style={{ height: 600 }}>
+                                                                                  <Canvas camera={{ position: [0, 0, 6], fov: 50 }}>
+                                                                                                <GlobeScene onHover={onHover} onSelect={onSelect} hoveredId={hoveredId} />
+                                                                                  </Canvas>Canvas>
+                                                                      </div>div>
+                                                            
+                                                              {/* RIGHT: Signal Feed */}
+                                                                      <div className="hidden lg:block space-y-1.5">
+                                                                                  <div className="flex items-center gap-2 mb-2">
+                                                                                                <Zap className="w-3.5 h-3.5 text-cyan-400" />
+                                                                                                <span className="text-[10px] font-mono tracking-wider text-cyan-400 uppercase">Signal Feed</span>span>
+                                                                                  </div>div>
+                                                                        {hubs.slice(0, 8).map((h, i) => (
+                                                              <div
+                                                                                key={h.id}
+                                                                                className={'flex items-center justify-between px-2.5 py-1.5 rounded border transition-all cursor-pointer ' +
+                                                                                                    (selectedId === h.id ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-white/[0.02] border-white/[0.04] hover:border-cyan-500/20')}
+                                                                                onClick={() => onSelect(h.id)}
+                                                                              >
+                                                                              <div className="flex items-center gap-1.5">
+                                                                                                <div className="w-1.5 h-1.5 rounded-full" style={{ background: h.color }} />
+                                                                                                <span className="text-[10px] font-mono text-gray-300">{h.name}</span>span>
+                                                                              </div>div>
+                                                                              <div className="flex items-center gap-1">
+                                                                                {h.change >= 0 ? <ArrowUpRight className="w-2.5 h-2.5 text-emerald-400" /> : <ArrowDownRight className="w-2.5 h-2.5 text-red-400" />}
+                                                                                                <span className={'text-[10px] font-mono font-bold ' + changeClass(h.change)}>{changeStr(h.change)}</span>span>
+                                                                              </div>div>
+                                                              </div>div>
+                                                            ))}
+                                                                      </div>div>
+                                                            </div>div>
+                                                    
+                                                      {/* SELECTED HUB DETAIL CARD */}
+                                                      {selectedHub && (
+                                                          <div className="mt-4 mx-auto max-w-2xl p-4 rounded-xl bg-black/50 border border-emerald-500/20 backdrop-blur-sm">
+                                                                      <div className="flex items-center justify-between mb-3">
+                                                                                    <div className="flex items-center gap-3">
+                                                                                                    <div className="w-3 h-3 rounded-full" style={{ background: selectedHub.color }} />
+                                                                                                    <div>
+                                                                                                                      <h3 className="text-sm font-bold text-white">{selectedHub.name} &mdash; {selectedHub.exchange}</h3>h3>
+                                                                                                                      <p className="text-[10px] text-gray-500 font-mono">{selectedHub.country}</p>p>
+                                                                                                      </div>div>
+                                                                                    </div>div>
+                                                                                    <div className="text-right">
+                                                                                                    <div className={'text-lg font-bold font-mono ' + changeClass(selectedHub.change)}>{changeStr(selectedHub.change)}</div>div>
+                                                                                                    <div className="text-[10px] text-gray-500 font-mono">Vol: {selectedHub.volume}</div>div>
+                                                                                    </div>div>
+                                                                      </div>div>
+                                                                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                                                        {[
+                                                            { label: 'Market Cap', value: selectedHub.marketCap, cls: 'text-white' },
+                                                            { label: 'Volume', value: selectedHub.volume, cls: 'text-white' },
+                                                            { label: 'Key Tickers', value: selectedHub.tickers.join(', '), cls: 'text-emerald-400' },
+                                                            { label: 'Exchange', value: selectedHub.exchange, cls: 'text-cyan-400' },
+                                                                          ].map((item, i) => (
+                                                                                            <div key={i} className="px-2.5 py-2 rounded bg-white/[0.03] border border-white/[0.06]">
+                                                                                                              <div className="text-[9px] text-gray-500 font-mono mb-0.5">{item.label}</div>div>
+                                                                                                              <div className={'text-xs font-bold font-mono ' + item.cls}>{item.value}</div>div>
+                                                                                              </div>div>
+                                                                                          ))}
+                                                                      </div>div>
+                                                          </div>div>
+                                                            )}
+                                                    </div>div>
+                                              
+                                                {/* MOBILE SECTORS */}
+                                                    <div className="lg:hidden mt-4 px-4">
+                                                            <div className="flex gap-2 overflow-x-auto pb-2">
+                                                              {SECTOR_DATA.map((s, i) => (
+                                                            <div key={i} className="flex-shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.03] border border-white/[0.06]">
+                                                                          <div className="w-1.5 h-1.5 rounded-full" style={{ background: s.color }} />
+                                                                          <span className="text-[10px] font-mono text-gray-400 whitespace-nowrap">{s.name}</span>span>
+                                                                          <span className={'text-[10px] font-mono font-bold ' + changeClass(s.change)}>{changeStr(s.change)}</span>span>
+                                                            </div>div>
+                                                          ))}
+                                                            </div>div>
+                                                    </div>div>
+                                              
+                                                {/* CORNER ACCENTS */}
+                                                    <div className="absolute top-0 left-0 w-24 h-24 border-l border-t border-emerald-500/10" />
+                                                    <div className="absolute top-0 right-0 w-24 h-24 border-r border-t border-emerald-500/10" />
+                                                    <div className="absolute bottom-0 left-0 w-24 h-24 border-l border-b border-emerald-500/10" />
+                                                    <div className="absolute bottom-0 right-0 w-24 h-24 border-r border-b border-emerald-500/10" />
+                                              </section>section>
+                                            )
+                                          }</></></></></></>

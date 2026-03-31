@@ -6,6 +6,8 @@ const nextConfig = {
       { protocol: 'https', hostname: '**' },
     ],
   },
+    env: {
+    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key',    },
   async headers() {
     return [
       {

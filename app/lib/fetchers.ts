@@ -101,7 +101,23 @@ export async function fetchFedUpdates(): Promise<mock.FedUpdate[]> {
 export async function fetchGeoRisk(): Promise<mock.GeoRiskEvent[]> { return mock.getMockGeoRisk(); }
 
 // ── CONTRACTOR PROFILES ──
-export async function fetchContractor(ticker: string): Promise<mock.ContractorProfile | null> { return mock.getMockContractor(ticker); }
+export async function fetchContractor(ticker: string): Promise<mock.ContractorProfile | null> {
+    const profile = mock.getMockContractor(ticker);
+    if (!profile) return null;
+    if (!FINNHUB_KEY || FINNHUB_KEY === 'your_key_here') return profile;
+    try {
+          const res = await fetch(`https://finnhub.io/api/v1/quote?symbol=${ticker}&token=${FINNHUB_KEY}`, { next: { revalidate: 60 } });
+          if (res.ok) {
+                  const data = await res.json();
+                  if (data.c) {
+                            profile.price = data.c;
+                            profile.change = data.d ?? 0;
+                            profile.changePct = data.dp ?? 0;
+                  }
+          }
+    } catch (e) { /* fallback to mock price */ }
+    return profile;
+}
 
 // ── HELPERS ──
 function categorizeArticle(text: string): string {
