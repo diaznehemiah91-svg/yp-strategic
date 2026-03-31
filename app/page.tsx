@@ -10,9 +10,10 @@ import MacroPanel from './components/MacroPanel';
 import GeoRiskPanel from './components/GeoRiskPanel';
 import ContractorGrid from './components/ContractorGrid';
 import dynamic from 'next/dynamic'
+import NexusSection from './components/NexusSection';
 
 const GlobeWithDetails = dynamic(() => import('./components/GlobeWithDetails'), { ssr: false })
-import NexusSection from './components/NexusSection';
+const GlobalStockGlobe = dynamic(() => import('./components/GlobalStockGlobe'), { ssr: false })
 import PricingSection from './components/PricingSection';
 import AdSlot from './components/AdSlot';
 import NavBar from './components/NavBar';
@@ -107,6 +108,21 @@ export default async function Home() {
           <span className="w-6 h-px bg-[var(--accent)]" />◆ Heatmap: Performance Matrix
         </div>
         <SectorHeatmap stocks={stocks} />
+
+        {/* ── GLOBAL STOCK INTELLIGENCE GLOBE ── */}
+        <div className="font-mono text-[10px] tracking-[3px] uppercase text-[var(--accent)] mb-4 flex items-center gap-2 fade-up d3">
+          <span className="w-6 h-px bg-[var(--accent)]" />◆ Global Stock Intelligence Globe
+        </div>
+        <div className="mb-2 fade-up d3">
+          <div className="font-mono text-[9px] uppercase tracking-widest text-[var(--text-dim)] flex flex-wrap gap-4">
+            <span>120+ Companies · S&P 500 + NASDAQ 100</span>
+            <span>Live Finnhub Prices · Sector Color-Coded</span>
+            <span>Drag · Zoom · Click for Details</span>
+          </div>
+        </div>
+        <div className="mb-7 rounded-lg overflow-hidden border border-[var(--border)] fade-up d4">
+          <GlobalStockGlobe />
+        </div>
 
         {/* ── GLOBAL SEARCH TIP ── */}
         <div className="glass p-6 mb-7 fade-up d4 border border-[var(--border)]">
