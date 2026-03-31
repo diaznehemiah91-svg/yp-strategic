@@ -4,11 +4,6 @@ import { sendSms, formatAlertMessage } from '@/app/lib/twilio'
 
 export const maxDuration = 60
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY!
-)
-
 // Fetch current price from Yahoo Finance
 async function getPrice(ticker: string): Promise<number | null> {
   try {
@@ -31,6 +26,15 @@ export async function GET() {
   const startTime = new Date()
   let alertsChecked = 0
   let alertsTriggered = 0
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY
+
+  if (!supabaseUrl || !supabaseKey) {
+    return NextResponse.json({ error: 'Supabase environment variables not configured' }, { status: 500 })
+  }
+
+  const supabase = createClient(supabaseUrl, supabaseKey)
 
   try {
     console.log('🔍 Price check Cron Job started at', startTime)

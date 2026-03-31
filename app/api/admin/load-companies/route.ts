@@ -8,11 +8,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY!
-)
-
 // Dow Jones Industrial Average (30 companies)
 const DOW_30 = [
   { ticker: 'AAPL', name: 'Apple', sector: 'Technology' },
@@ -205,6 +200,15 @@ export async function POST(request: NextRequest) {
       { status: 403 }
     )
   }
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY
+
+  if (!supabaseUrl || !supabaseKey) {
+    return NextResponse.json({ error: 'Supabase environment variables not configured' }, { status: 500 })
+  }
+
+  const supabase = createClient(supabaseUrl, supabaseKey)
 
   try {
     // Generate full company list (merge Dow 30 + Nasdaq 100, fill to 2,600)

@@ -11,7 +11,7 @@ import GeoRiskPanel from './components/GeoRiskPanel';
 import ContractorGrid from './components/ContractorGrid';
 import dynamic from 'next/dynamic'
 
-const GlobeWithDetails = dynamic(() => import('./components/GlobeWithDetails'), { ssr: false })
+const GlobalOperationsGlobe = dynamic(() => import('./components/GlobalOperationsGlobe'), { ssr: false })
 import NexusSection from './components/NexusSection';
 import PricingSection from './components/PricingSection';
 import AdSlot from './components/AdSlot';
@@ -20,8 +20,6 @@ import SectorHeatmap from './components/SectorHeatmap';
 import CorrelationMatrix from './components/CorrelationMatrix';
 import SectorMomentum from './components/SectorMomentum';
 import NewsGlobe from './components/NewsGlobe';
-import SignalNotifications from './components/SignalNotifications';
-
 export const revalidate = 60;
 
 export default async function Home() {
@@ -36,7 +34,6 @@ export default async function Home() {
 
   return (
     <>
-      <SignalNotifications />
       <ThreeBackground />
 
       <div className="relative z-10 max-w-[1260px] mx-auto px-5 pt-6 pb-20">
@@ -177,7 +174,7 @@ export default async function Home() {
 
       {/* ── GLOBAL INTELLIGENCE COMMAND CENTER ── */}
       <div id="forge" className="w-full h-screen relative z-10 bg-[#000814]">
-        <GlobeWithDetails />
+        <GlobalOperationsGlobe />
       </div>
 
       {/* ── NEXUS + PRICING + FOOTER ── */}

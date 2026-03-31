@@ -10,11 +10,6 @@ const MOCK_COMPANIES = [
   { id: 6, ticker: 'CRWD', name: 'CrowdStrike', sector: 'Cyber', price: 142.56, change_pct: 2.11, market_cap: 46e9 },
 ]
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY!
-)
-
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
@@ -23,6 +18,24 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search')
     const page = parseInt(searchParams.get('page') || '1')
     const perPage = parseInt(searchParams.get('per_page') || '100')
+
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY
+
+    // If Supabase not configured, return mock data immediately
+    if (!supabaseUrl || !supabaseKey) {
+      let filtered = MOCK_COMPANIES
+      if (ticker) filtered = filtered.filter(c => c.ticker.toLowerCase().includes(ticker.toLowerCase()))
+      if (search) {
+        const s = search.toLowerCase()
+        filtered = filtered.filter(c => c.ticker.toLowerCase().includes(s) || c.name.toLowerCase().includes(s))
+      }
+      if (sector) filtered = filtered.filter(c => c.sector === sector)
+      const start = (page - 1) * perPage
+      return NextResponse.json({ data: filtered.slice(start, start + perPage), total: filtered.length, page, per_page: perPage, source: 'mock' })
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseKey)
 
     // Try to fetch from Supabase, fallback to mock data
     let query = supabase.from('companies').select('*')

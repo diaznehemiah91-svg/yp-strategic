@@ -65,6 +65,7 @@ export async function PUT(request: NextRequest) {
 
       // Update user subscription in Supabase
       const supabase = await createClient()
+      if (!supabase) throw new Error('Supabase not configured')
       await supabase
         .from('subscriptions')
         .insert({
