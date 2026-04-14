@@ -108,7 +108,7 @@ function EarthLayer() {
                                   roughness={0.8}
                                   metalness={0.3}
                                 />
-              </mesh>mesh>
+              </mesh>
           {/* Atmosphere glow */}
               <mesh>
                       <sphereGeometry args={[2.7, 64, 64]} />
@@ -118,7 +118,7 @@ function EarthLayer() {
                                   opacity={0.05}
                                   side={THREE.BackSide}
                                 />
-              </mesh>mesh>
+              </mesh>
           {/* Outer atmosphere */}
               <mesh>
                       <sphereGeometry args={[2.85, 64, 64]} />
@@ -128,7 +128,7 @@ function EarthLayer() {
                                   opacity={0.02}
                                   side={THREE.BackSide}
                                 />
-              </mesh>mesh>
+              </mesh>
           {/* Graticule lines */}
               <GraticuleLayer />
         </>>
@@ -230,7 +230,7 @@ function HubDot({ hub, onHover, onSelect, isHovered }: {
                                         <mesh ref={glowRef}>
                                                 <sphereGeometry args={[0.06 * hub.importance, 16, 16]} />
                                                 <meshBasicMaterial color={hub.color} transparent opacity={0.15} />
-                                        </mesh>mesh>
+                                        </mesh>
                                     {/* Core dot */}
                                         <mesh
                                                   ref={meshRef}
@@ -240,17 +240,17 @@ function HubDot({ hub, onHover, onSelect, isHovered }: {
                                                 >
                                                 <sphereGeometry args={[0.04 * hub.importance, 16, 16]} />
                                                 <meshBasicMaterial color={hub.color} />
-                                        </mesh>mesh>
+                                        </mesh>
                                     {/* Center bright point */}
                                         <mesh>
                                                 <sphereGeometry args={[0.015, 12, 12]} />
                                                 <meshBasicMaterial color="#ffffff" />
-                                        </mesh>mesh>
+                                        </mesh>
                                     {/* Pulse ring */}
                                         <mesh ref={ringRef}>
                                                 <ringGeometry args={[0.04, 0.05, 32]} />
                                                 <meshBasicMaterial color={hub.color} transparent opacity={0.5} side={THREE.DoubleSide} />
-                                        </mesh>mesh>
+                                        </mesh>
                                     {/* Tooltip on hover */}
                                     {isHovered && (
                                             <Html distanceFactor={8} position={[0, 0.15, 0]} center>
@@ -366,7 +366,7 @@ function PulseLayer() {
                                                               >
                                                               <sphereGeometry args={[0.03, 12, 12]} />
                                                               <meshBasicMaterial color={from.color} transparent opacity={0.9} />
-                                                  </mesh>mesh>
+                                                  </mesh>
                                                 )
                   })}
                   </>>
@@ -390,7 +390,7 @@ function ScanLine() {
                   <mesh ref={meshRef} rotation={[0, 0, 0]}>
                         <ringGeometry args={[2.5, 2.55, 64]} />
                         <meshBasicMaterial color="#00ff88" transparent opacity={0.08} side={THREE.DoubleSide} />
-                  </mesh>mesh>
+                  </mesh>
                 )
 }
 
