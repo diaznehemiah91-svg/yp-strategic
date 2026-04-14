@@ -171,6 +171,8 @@ This platform is operated by **Y.P Strategic Research (S-Corp)** and generates r
 
 Revenue metrics are tracked via the `/api/ads` endpoint and can be exported for tax filing, business loan applications, and financial reporting.
 
+<!-- Last updated: April 14, 2026 -->
+
 ---
 
 ## 📝 License
